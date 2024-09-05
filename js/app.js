@@ -1,5 +1,7 @@
 import { dia, shapes } from '../node_modules/@joint/core/joint.mjs';
 
+import {Node, ButtonNode, ButtonNodeView, Entity, WeakEntity, Attribute, MultiAttribute} from './Node.js';
+
 const namespace = shapes;
 
 const graph = new dia.Graph({}, { cellNamespace: namespace });
@@ -13,33 +15,41 @@ const paper = new dia.Paper({
   cellViewNamespace: namespace
 });
 
-const rect1 = new shapes.standard.Rectangle();
-rect1.position(25, 25);
-rect1.resize(180, 50);
-rect1.addTo(graph);
 
-const rect2 = new shapes.standard.Rectangle();
-rect2.position(95, 225);
-rect2.resize(180, 50);
-rect2.addTo(graph);
 
-rect1.attr('body', { stroke: '#C94A46', rx: 2, ry: 2 });
-rect2.attr('body', { stroke: '#C94A46', rx: 2, ry: 2 });
-
-rect1.attr('label', { text: 'Hello', fill: '#353535' });
-rect2.attr('label', { text: 'World!', fill: '#353535' });
-
-const link = new shapes.standard.Link();
-link.source(rect1);
-link.target(rect2);
-link.addTo(graph);
-
-link.appendLabel({
-  attrs: {
-    text: {
-      text: 'to the'
-    }
+const ent1 = new Entity()
+ent1.position(250, 125);
+ent1.attr({
+  label: {
+    text: 'PERSONA'
   }
 });
-link.router('orthogonal');
-link.connector('straight', {  cornerType: 'line' });
+ent1.addTo(graph);
+
+
+const went1 = new WeakEntity()
+went1.position(50, 125);
+went1.attr({
+  label: {
+    text: 'PERSONA'
+  }
+});
+went1.addTo(graph);
+
+const at1 = new Attribute()
+at1.position(500, 125);
+at1.attr({
+  label: {
+    text: 'PERSONA'
+  }
+});
+at1.addTo(graph);
+
+const mat1 = new MultiAttribute()
+mat1.position(500, 225);
+mat1.attr({
+  label: {
+    text: 'PERSONA'
+  }
+});
+mat1.addTo(graph);
