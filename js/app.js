@@ -1,9 +1,15 @@
-import { dia, shapes } from '../node_modules/@joint/core/joint.mjs';
+import { dia, shapes, elementTools } from '../node_modules/@joint/core/joint.mjs';
+import {Entity, Attribute, AttributeButton} from './Node.js';
 
-import {Node, ButtonNode, ButtonNodeView, Entity, WeakEntity, Attribute, MultiAttribute} from './Node.js';
 
-const namespace = shapes;
 
+const namespace = {
+  ...shapes,
+  erd: {
+    Attribute,
+    Entity
+  }
+};
 const graph = new dia.Graph({}, { cellNamespace: namespace });
 
 const paper = new dia.Paper({
@@ -12,21 +18,43 @@ const paper = new dia.Paper({
   width: 1000,
   height: 600,
   background: { color: '#F5F5F5' },
-  cellViewNamespace: namespace
+  cellViewNamespace: namespace,
+  guard: (e) => e.target.getAttribute('contenteditable') != null
 });
 
-
-
-const ent1 = new Entity()
-ent1.position(250, 125);
-ent1.attr({
-  label: {
-    text: 'PERSONA'
-  }
+paper.on('blank:pointerdown cell:pointerdown', () => {
+  document.activeElement.blur();
 });
-ent1.addTo(graph);
+paper.on('element:mouseenter', elementView => {
+  elementView.showTools();
+});
+paper.on('element:mouseleave', elementView => {
+  elementView.hideTools();
+});
+
+document.querySelector('#createEntity').addEventListener('click',(e) => {
+  const en = new Entity()
+  en.position(500, 150);
+  en.addTo(graph);
+  const elementView = en.findView(paper)
+  const removeButton = new elementTools.Remove();
+  const attributeButton = new AttributeButton();
+  const toolsView = new dia.ToolsView({
+    tools: [
+      removeButton,
+      attributeButton
+    ]
+  });
+  elementView.addTools(toolsView);
+  elementView.hideTools();
+})
+
+document.addEventListener('input',(e) => {
+  if ('placeholder' in e.target.dataset && e.target.innerText.trim() == '') while (e.target.firstChild) e.target.removeChild(e.target.firstChild);
+})
 
 
+/*
 const went1 = new WeakEntity()
 went1.position(50, 125);
 went1.attr({
@@ -53,3 +81,4 @@ mat1.attr({
   }
 });
 mat1.addTo(graph);
+*/
