@@ -1,5 +1,5 @@
 import { dia, shapes, elementTools } from '../node_modules/@joint/core/joint.mjs';
-import {Entity, Attribute, AttributeButton, SettingsButton} from './Node.js';
+import {Entity, Attribute, Relation, AttributeButton, SettingsButton} from './Node.js';
 
 
 
@@ -7,7 +7,8 @@ const namespace = {
   ...shapes,
   erd: {
     Attribute,
-    Entity
+    Entity,
+    Relation
   }
 };
 const graph = new dia.Graph({}, { cellNamespace: namespace });
@@ -53,6 +54,30 @@ document.querySelector('#createEntity').addEventListener('click',(e) => {
   elementView.addTools(toolsView);
   elementView.hideTools();
 })
+
+
+document.querySelector('#createRelation').addEventListener('click',(e) => {
+  const en = new Relation()
+  en.position(500, 150);
+  en.addTo(graph);
+  const elementView = en.findView(paper)
+  const removeButton = new elementTools.Remove({
+    scale: 1.5,
+    y: '50%'
+  });
+  const attributeButton = new AttributeButton();
+  const settingsButton = new SettingsButton();
+  const toolsView = new dia.ToolsView({
+    tools: [
+      removeButton,
+      attributeButton,
+      settingsButton
+    ]
+  });
+  elementView.addTools(toolsView);
+  elementView.hideTools();
+})
+
 
 document.addEventListener('input',(e) => {
   if ('placeholder' in e.target.dataset && e.target.innerText.trim() == '') while (e.target.firstChild) e.target.removeChild(e.target.firstChild);
