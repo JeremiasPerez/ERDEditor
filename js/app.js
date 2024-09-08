@@ -1,5 +1,5 @@
 import { dia, shapes, elementTools } from '../node_modules/@joint/core/joint.mjs';
-import {Entity, Attribute, AttributeButton} from './Node.js';
+import {Entity, Attribute, AttributeButton, SettingsButton} from './Node.js';
 
 
 
@@ -37,12 +37,17 @@ document.querySelector('#createEntity').addEventListener('click',(e) => {
   en.position(500, 150);
   en.addTo(graph);
   const elementView = en.findView(paper)
-  const removeButton = new elementTools.Remove();
+  const removeButton = new elementTools.Remove({
+    scale: 1.5,
+    y: '50%'
+  });
   const attributeButton = new AttributeButton();
+  const settingsButton = new SettingsButton();
   const toolsView = new dia.ToolsView({
     tools: [
       removeButton,
-      attributeButton
+      attributeButton,
+      settingsButton
     ]
   });
   elementView.addTools(toolsView);
@@ -51,34 +56,12 @@ document.querySelector('#createEntity').addEventListener('click',(e) => {
 
 document.addEventListener('input',(e) => {
   if ('placeholder' in e.target.dataset && e.target.innerText.trim() == '') while (e.target.firstChild) e.target.removeChild(e.target.firstChild);
+  else if (e.target.classList.contains('elementNameInput')){
+    paper.findView(e.target.closest('.joint-element')).model.attr('label',e.target.innerText.trim())
+    // todo - adjust width
+  }
 })
 
-
-/*
-const went1 = new WeakEntity()
-went1.position(50, 125);
-went1.attr({
-  label: {
-    text: 'PERSONA'
-  }
-});
-went1.addTo(graph);
-
-const at1 = new Attribute()
-at1.position(500, 125);
-at1.attr({
-  label: {
-    text: 'PERSONA'
-  }
-});
-at1.addTo(graph);
-
-const mat1 = new MultiAttribute()
-mat1.position(500, 225);
-mat1.attr({
-  label: {
-    text: 'PERSONA'
-  }
-});
-mat1.addTo(graph);
-*/
+document.querySelector('#settingsCloseButton').addEventListener('click', (e) => {
+  document.querySelector('#settingsContainer').classList.remove('visible')
+})

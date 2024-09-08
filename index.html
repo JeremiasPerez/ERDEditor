@@ -24,10 +24,66 @@
 
 <body>
 
-  <!-- Add your site or application content here -->
   <div id="paper">
   </div>
   <button id="createEntity">Añadir entidad</button>
+  <div id="settingsContainer">
+    <div id="settingsOuterBox">
+      <svg id="settingsCloseButton" cursor="pointer" style="right: 5px;top: 5px;position: absolute;" width="20px" height="20px" viewBox="0 0 20 20">
+        <g>
+          <circle fill="#ccc" r="10" cx="10" cy="10">
+          </circle>
+          <path fill="none" stroke="#FFFFFF" stroke-width="2" d="M 5 5 15 15 M 5 15 15 5">
+          </path>
+        </g>
+      </svg>
+      <div id="settingsContent"></div>
+    </div>
+  </div>
+
+  <template id="entitySettingsContent">
+    <div class="content">
+      <div class="settings-element">
+        <label>Is weak?</label>
+        <label class="switch">
+          <input id="isWeakInput" type="checkbox">
+          <span class="slider round"></span>
+        </label>
+      </div>
+    </div>
+  </template>
+
+  <template id="attributeSettingsContent">
+    <div class="content">
+      <div class="settings-element">
+        <label>Parent</label>
+        <select name="attributeParent" id="attributeParent"></select>
+      </div>
+      <div class="settings-element">
+        <label>Is multivaluated?</label>
+        <label class="switch">
+          <input id="isMultivaluatedInput" type="checkbox">
+          <span class="slider round"></span>
+        </label>
+      </div>
+      <div class="settings-element">
+        <label>Is derivated?</label>
+        <label class="switch">
+          <input id="isDerivatedInput" type="checkbox">
+          <span class="slider round"></span>
+        </label>
+      </div>
+      <div class="settings-element">
+        <label>Is key?</label>
+        <label class="switch">
+          <input id="isKeyInput" type="checkbox">
+          <span class="slider round"></span>
+        </label>
+      </div>
+    </div>
+  </template>
+
+
   <script type="module" src="js/app.js" defer></script>
 </body>
 

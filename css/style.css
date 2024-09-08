@@ -265,3 +265,104 @@ textarea {
 [contenteditable=true] {
   outline: 0px solid transparent;
 }
+
+#settingsContainer:not(.visible){
+  display:none;
+}
+
+#settingsContainer.visible{
+  position: fixed;
+  left: 200px;
+  top: 200px;
+  z-index:99999;
+  width:200px;
+  /*height:200px;*/
+}
+
+#settingsOuterBox{
+  width:100%;
+  height: 100%;
+  border: solid 1px black;
+  border-radius: 5px 5px 5px 5px;
+  background: white;
+}
+
+
+/* Hide default HTML checkbox */
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The slider */
+input:checked + .slider {
+  background-color: #00d349;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #00d349;
+}
+
+.slider.round::before {
+  border-radius: 40% 0% 0% 40%;
+}
+.slider::before {
+  position: absolute;
+  content: "";
+  height: 13px;
+  width: 21px;
+  left: 4px;
+  bottom: 3px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider.round {
+  border-radius: 10px;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 19px;
+}
+
+input:checked + .slider::before {
+  -webkit-transform: translateX(21px);
+  -ms-transform: translateX(21px);
+  transform: translateX(21px);
+  border-radius: 0% 40% 40% 0%;
+}
+
+#settingsContent {
+  width: 80%;
+  height: 80%;
+  margin: 10%;
+  margin-top: 25%;
+}
+
+.settings-element{
+  display: flex;
+  width: 100%;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#settingsCloseButton:hover circle{
+  fill: red;
+}
