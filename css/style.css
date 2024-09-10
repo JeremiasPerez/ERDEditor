@@ -366,3 +366,8 @@ input:checked + .slider::before {
 #settingsCloseButton:hover circle{
   fill: red;
 }
+
+.elementNameInput{
+  padding-left: 3ch;
+  padding-right: 3ch;
+}

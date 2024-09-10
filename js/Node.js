@@ -49,13 +49,13 @@ export const AttributeButton = elementTools.Button.extend({
           textAnchor: 'middle',
           textVerticalAnchor: 'middle',
           fill: 'black',
-          fontSize: 8,
-          strokeWidth: 1.5,
+          fontSize: 6,
+          strokeWidth: 1,
           stroke: 'black',
           x: 0,
-          y: 3
+          y: 2
         },
-        textContent: '+',
+        textContent: '➕',
       }],
     x: '50%',
     y: '100%',
@@ -83,11 +83,13 @@ export const AttributeButton = elementTools.Button.extend({
       });
       const settingsButton = new SettingsButton();
       const attributeButton = new AttributeButton();
+      const linkButton = new LinkButton()
       const toolsView = new dia.ToolsView({
         tools: [
           removeButton,
           settingsButton,
-          attributeButton
+          attributeButton,
+          linkButton
         ]
       });
       elementView.addTools(toolsView);
@@ -122,6 +124,57 @@ export const SettingsButton = elementTools.Button.extend({
   }
 });
 
+export const LinkButton = elementTools.Button.extend({
+  name: 'link-button',
+  options: {
+    markup: [
+      {
+        tagName: 'circle',
+        selector: 'outer-circle',
+        attributes: {
+          cursor: 'pointer',
+          fill: 'white',
+          stroke: 'black',
+          strokeWidth: '1',
+          r: '8'
+        }
+      },
+      {tagName: 'text',
+        selector: 'link-button',
+        attributes: {
+          cursor: 'pointer',
+          textAnchor: 'middle',
+          textVerticalAnchor: 'middle',
+          fill: 'black',
+          fontSize: 8,
+          strokeWidth: 1,
+          stroke: 'black',
+          x: 0,
+          y: 3
+        },
+        textContent: '🠀',
+      }],
+    x: '50%',
+    y: '0%',
+    scale: 1.5,
+    rotate: true,
+    action: function(evt, elementView, buttonView) {
+      elementView.hideTools();
+      let bbox = this.model.getBBox()
+      this.paper.model.set('linking',true)
+      console.log(this)
+      this.paper.model.set('linkSource',this.el.id)
+      let link = document.querySelector('[model-id=connectionLink]')
+      let linkEl = this.paper.findView(link)
+      linkEl.model.prop('source',this.model.getAbsolutePointFromRelative(bbox.width/2,bbox.height/2))
+      linkEl.model.attr('line/display',null)
+      //linkEl.model.prop('target',this.model.getAbsolutePointFromRelative(75,0))
+      this.paper.el.dispatchEvent(new MouseEvent("mousedown"))
+    }
+  }
+});
+
+
 const entityMarkup = util.svg/* xml */`
     <rect @selector="entityBody"/>
     <rect @selector="innerEntityBody"/>
@@ -145,6 +198,10 @@ export class Entity extends dia.Element {
       size: {
         width: 150,
         height: 50
+      },
+      initialSize: {
+        width: 150,
+        height: 50,
       },
       attrs: {
         root: {
@@ -219,6 +276,10 @@ export class Attribute extends dia.Element {
       size: {
         width: 150,
         height: 50
+      },
+      initialSize: {
+        width: 150,
+        height: 50,
       },
       attrs: {
         root: {
@@ -309,6 +370,10 @@ export class Relation extends dia.Element {
       size: {
         width: 150,
         height: 50
+      },
+      initialSize: {
+        width: 150,
+        height: 50,
       },
       attrs: {
         root: {

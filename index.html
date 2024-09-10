@@ -28,6 +28,9 @@
   </div>
   <button id="createEntity">Añadir entidad</button>
   <button id="createRelation">Añadir relación</button>
+  <button id="exportAsPng">Exportar png</button>
+  <button id="exportAsJson">Exportar json</button>
+  <img id="img-container"/>
   <div id="settingsContainer">
     <div id="settingsOuterBox">
       <svg id="settingsCloseButton" cursor="pointer" style="right: 5px;top: 5px;position: absolute;" width="20px" height="20px" viewBox="0 0 20 20">
@@ -57,10 +60,6 @@
   <template id="attributeSettingsContent">
     <div class="content">
       <div class="settings-element">
-        <label>Parent</label>
-        <select name="attributeParent" id="attributeParent"></select>
-      </div>
-      <div class="settings-element">
         <label>Is multivaluated?</label>
         <label class="switch">
           <input id="isMultivaluatedInput" type="checkbox">
@@ -84,8 +83,9 @@
     </div>
   </template>
 
-
+  <!--<script src="https://unpkg.com/svg2png-wasm"></script>-->
   <script type="module" src="js/app.js" defer></script>
+
 </body>
 
 </html>

@@ -22,6 +22,8 @@
     "webpack-merge": "^5.10.0"
   },
   "dependencies": {
-    "@joint/core": "^4.0.4"
+    "@joint/core": "^4.0.4",
+    "dom-to-image-more": "^3.4.3",
+    "svg2png-wasm": "^1.4.1"
   }
 }
