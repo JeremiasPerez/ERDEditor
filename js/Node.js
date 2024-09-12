@@ -1,4 +1,4 @@
-import { dia, shapes, util, elementTools } from '../node_modules/@joint/core/joint.mjs';
+import { dia, shapes, util, elementTools, linkTools } from '../node_modules/@joint/core/joint.mjs';
 
 
 
@@ -12,7 +12,7 @@ const showSettings = (element) => {
       settingsCont = document.querySelector('#entitySettingsContent').content.cloneNode(true);
       settingsCont.querySelector("#isWeakInput").checked = element.model.attr('isWeak')
       settingsCont.querySelector("#isWeakInput").addEventListener('change', () => {element.model.toggleWeakness()})
-      break;
+      break
     case 'erd.Attribute':
       settingsCont = document.querySelector('#attributeSettingsContent').content.cloneNode(true);
       settingsCont.querySelector("#isKeyInput").checked = element.model.attr('isKey')
@@ -21,7 +21,12 @@ const showSettings = (element) => {
       settingsCont.querySelector("#isMultivaluatedInput").addEventListener('change', () => {element.model.toggleMultivaluatedness()})
       settingsCont.querySelector("#isDerivatedInput").checked = element.model.attr('isDerivated')
       settingsCont.querySelector("#isDerivatedInput").addEventListener('change', () => {element.model.toggleDerivatedness()})
-      break;
+      break
+    case 'erd.Relation':
+      settingsCont = document.querySelector('#relationSettingsContent').content.cloneNode(true);
+      settingsCont.querySelector("#isIndentifierInput").checked = element.model.attr('isIdentifier')
+      settingsCont.querySelector("#isIndentifierInput").addEventListener('change', () => {element.model.toggleIdentifier()})
+      break
   }
   settingsContent.appendChild(settingsCont);
 }
@@ -175,12 +180,28 @@ export const LinkButton = elementTools.Button.extend({
 });
 
 
+const verticesTool = new linkTools.Vertices();
+const segmentsTool = new linkTools.Segments();
+const sourceAnchorTool = new linkTools.SourceAnchor();
+const targetAnchorTool = new linkTools.TargetAnchor();
+const boundaryTool = new linkTools.Boundary();
+const removeButton = new linkTools.Remove();
+
+export const toolsView = new dia.ToolsView({
+  tools: [
+    verticesTool, segmentsTool,
+    sourceAnchorTool, targetAnchorTool,
+    boundaryTool, removeButton
+  ]
+})
+
+
 const entityMarkup = util.svg/* xml */`
     <rect @selector="entityBody"/>
     <rect @selector="innerEntityBody"/>
     <foreignObject @selector="elementName">
       <div @selector="content" xmlns="http://www.w3.org/1999/xhtml" class="elementNameContainer">
-        <div @selector="entityName" class="elementNameInput" contenteditable="true" style="text-transform:uppercase" data-placeholder="ENTITY" autocomplete="off" autocorrect="off" spellcheck="false"></div>
+        <div @selector="entityName" class="elementNameInput" contenteditable="true" style="text-transform:uppercase" data-placeholder="ENTIDAD" autocomplete="off" autocorrect="off" spellcheck="false"></div>
       </div>
     </foreignObject>
 `
@@ -259,7 +280,7 @@ const attributteMarkup = util.svg/* xml */`
     <ellipse @selector="innerAttributeBody"/>
     <foreignObject @selector="elementName">
       <div @selector="content" xmlns="http://www.w3.org/1999/xhtml" class="elementNameContainer">
-        <div @selector="attributeName" class="elementNameInput" contenteditable="true" style="text-transform:lowercase" data-placeholder="ATTRIBUTE" autocomplete="off" autocorrect="off" spellcheck="false"></div>
+        <div @selector="attributeName" class="elementNameInput" contenteditable="true" style="text-transform:lowercase" data-placeholder="atributo" autocomplete="off" autocorrect="off" spellcheck="false"></div>
       </div>
     </foreignObject>`
 export class Attribute extends dia.Element {
@@ -353,7 +374,7 @@ const relationMarkup = util.svg/* xml */`
     <polygon @selector="innerRelationBody"/>
     <foreignObject @selector="elementName">
       <div @selector="content" xmlns="http://www.w3.org/1999/xhtml" class="elementNameContainer">
-        <div @selector="attributeName" class="elementNameInput" contenteditable="true" style="text-transform:lowercase" data-placeholder="RELATION" autocomplete="off" autocorrect="off" spellcheck="false"></div>
+        <div @selector="attributeName" class="elementNameInput" contenteditable="true" style="text-transform:lowercase" data-placeholder="relación" autocomplete="off" autocorrect="off" spellcheck="false"></div>
       </div>
     </foreignObject>`
 export class Relation extends dia.Element {

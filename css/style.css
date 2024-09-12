@@ -371,3 +371,7 @@ input:checked + .slider::before {
   padding-left: 3ch;
   padding-right: 3ch;
 }
+
+#paper{
+  border: solid 1px black;
+}

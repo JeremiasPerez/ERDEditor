@@ -1,5 +1,5 @@
-import { dia, shapes, elementTools } from '../node_modules/@joint/core/joint.mjs';
-import {Entity, Attribute, Relation, AttributeButton, SettingsButton, LinkButton} from './Node.js';
+import {util, dia, shapes, elementTools, linkTools } from '../node_modules/@joint/core/joint.mjs';
+import {Entity, Attribute, Relation, AttributeButton, SettingsButton, LinkButton, toolsView} from './Node.js';
 
 const namespace = {
   ...shapes,
@@ -18,7 +18,12 @@ const paper = new dia.Paper({
   height: 600,
   background: { color: 'white' },
   cellViewNamespace: namespace,
-  guard: (e) => e.target.getAttribute('contenteditable') != null
+  guard: (e) => e.target.getAttribute('contenteditable') != null,
+  snapLabels: true,
+  interactive: {
+    linkMove: false,
+    labelMove: true
+  }
 });
 
 paper.model.set('linking',false)
@@ -35,9 +40,11 @@ link.attr('line/display','none')
 link.addTo(graph);
 
 
+/*
 paper.on('blank:pointerdown cell:pointerdown', () => {
   document.activeElement.blur();
-});
+});*/
+
 paper.on('element:mouseenter', elementView => {
   elementView.showTools();
 });
@@ -59,10 +66,28 @@ paper.on('blank:pointermove', (evt, x, y) => {
   linkEl.model.prop('target', {x:x, y:y})
 })
 
+const validateConnection = (source, target) => {
+  let validConnections = []
+  let sourceType = source.model.get('type')
+  let targetType = target.model.get('type')
+  // valid connections: attribute - entity, attribute - relation, attribute - attribute, relation - entity
+  let validCons = [
+    ['erd.Entity','erd.Attribute'],['erd.Relation','erd.Attribute'],['erd.Attribute','erd.Attribute'],['erd.Relation','erd.Entity']
+  ]
+  let con = validCons.find(((el) => (el[0] == sourceType && el[1] == targetType) || (el[1] == sourceType && el[0] == targetType)))
+  //if(con == null) return false
+
+  // TODO: attribute can only be connected to one element
+  console.log(graph.getConnectedLinks(source))
+
+  return con
+}
+
 const manageConnection = (target) => {
   const sourceId = paper.model.get('linkSource')
   const source = paper.findView(document.querySelector('#'+sourceId))
-  // TODO - VALIDATE CONNECTION
+  const con = validateConnection(source, target)
+  if (con == null) return
   const link = new shapes.standard.Link({
     source: source.model,
     target: target.model,
@@ -71,9 +96,48 @@ const manageConnection = (target) => {
         targetMarker: 'none'
       }
     }
-  });
+  })
+  if (con.includes('erd.Entity') && con.includes('erd.Relation')){
+
+    const labelMarkup = util.svg/* xml */`
+  <foreignObject @selector="linkLabel">
+    <div @selector="content" xmlns="http://www.w3.org/1999/xhtml" class="linkLabelContainer">
+      <label @selector="linkLabelOpeningBrackets">(</label>
+      <label @selector="linkLabelMinCard" class="linkCardInput" contenteditable="true" style="text-transform:uppercase" data-placeholder="X" autocomplete="off" autocorrect="off" spellcheck="false"></label>
+      <label @selector="linkLabelOpeningComa">,</label>
+      <label @selector="linkLabelMaxCard" class="linkCardInput" contenteditable="true" style="text-transform:uppercase" data-placeholder="X" autocomplete="off" autocorrect="off" spellcheck="false"></label>
+      <label @selector="linkLabelClosingBrackets">)</label>
+    </div>
+  </foreignObject>`
+    link.appendLabel({
+      markup: labelMarkup,
+      attrs: {
+        linkLabel: {
+          width: '5ch',
+          height: 20
+        }
+      },
+      position: {
+        distance: 0.3,
+        offset: 40
+      }
+    })
+  }
+
   link.addTo(paper.model)
+
+  var linkView = link.findView(paper);
+  linkView.addTools(toolsView);
 }
+
+
+paper.on('link:mouseenter', (linkView) => {
+  linkView.showTools();
+});
+
+paper.on('link:mouseleave', (linkView) => {
+  linkView.hideTools();
+});
 
 paper.on('blank:pointerup', (evt, x, y) => {
   if (!paper.model.get('linking')) return
@@ -206,6 +270,11 @@ document.addEventListener('input',(e) => {
     let containerEl = paper.findView(e.target.closest('.joint-element'))
     containerEl.model.attr('label',e.target.innerText.trim())
     containerEl.model.prop('size/width',e.target.offsetWidth)
+  }
+  else if (e.target.classList.contains('linkCardInput')){
+    let content = e.target.innerText.trim()
+    const card = Number(content)
+    if(content != 'N' && content != 'n' && (Number.isNaN(card) || card < 0 || !Number.isInteger(card))) e.target.innerText = ''
   }
 })
 
