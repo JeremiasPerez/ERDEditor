@@ -208,7 +208,7 @@ paper.on('blank:pointerup', (evt, x, y) => {
 
 let createEntity = (x, y) => {
   const en = new Entity()
-  en.position(x, y);
+  en.position(x-en.getBBox().width/2, y-en.getBBox().height/2);
   en.addTo(graph);
   const elementView = en.findView(paper)
   const removeButton = new elementTools.Remove({
@@ -229,7 +229,7 @@ let createEntity = (x, y) => {
 }
 let createRelation = (x,y) => {
   const en = new Relation()
-  en.position(x, y);
+  en.position(x-en.getBBox().width/2, y-en.getBBox().height/2);
   en.addTo(graph);
   const elementView = en.findView(paper)
   const removeButton = new elementTools.Remove({
@@ -253,7 +253,7 @@ let createRelation = (x,y) => {
 
 let createAttribute = (x,y) => {
   const at1 = new Attribute()
-  at1.position(x, y);
+  at1.position(x-at1.getBBox().width/2, y-at1.getBBox().height/2);
   at1.addTo(graph);
 
   const elementView = at1.findView(paper)
@@ -287,31 +287,25 @@ document.querySelector('#download').addEventListener('click',(e) => {
 })
 
 document.querySelector('#import').addEventListener('click',(e) => {
-  let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(graph.toJSON()))
-  var a = document.createElement("a");
-  a.click();
-  a.setAttribute("href",dataStr)
-  a.setAttribute("download", "diagram.json")
-  document.body.appendChild(a);
-  a.click()
-  document.removeChild(a)
+  let fileInput = document.querySelector('#file-input')
+  fileInput.click()
 })
 
 document.querySelector('#file-input').addEventListener('change',(ev) => {
   const reader = new FileReader()
-  reader.onload = (e) => console.log('file contents:', ev.currentTarget.result)
+  //reader.onload = (e) => console.log('file contents:', e.target.result)
 
   reader.addEventListener("load", (e) => {
-    console.log(e.currentTarget.result, JSON.parse(reader.result))
-  });
+    graph.fromJSON(JSON.parse(reader.result))
+  })
 
   reader.readAsText(ev.currentTarget.files[0]);
 
 })
 
 
-document.querySelector('#exportAsPng').addEventListener('click',async (e) => {
-  /*const dataHeader = 'data:image/svg+xml;charset=utf-8'
+/*document.querySelector('#exportAsPng').addEventListener('click',async (e) => {
+  const dataHeader = 'data:image/svg+xml;charset=utf-8'
   const $svg = document.querySelector('#paper svg')
   const $holder = document.getElementById('img-container')
 
@@ -368,8 +362,8 @@ document.querySelector('#exportAsPng').addEventListener('click',async (e) => {
   );
   document.getElementById('img-container').src = URL.createObjectURL(
     new Blob([png], { type: 'image/png' }),
-  );*/
-})
+  );
+})*/
 
 
 document.addEventListener('input',(e) => {

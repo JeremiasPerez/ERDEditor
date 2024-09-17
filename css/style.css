@@ -424,3 +424,9 @@ body{
 #download{
   cursor:pointer;
 }
+#file-input{
+  display:none;
+}
+#import{
+  cursor:pointer;
+}
