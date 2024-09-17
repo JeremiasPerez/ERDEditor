@@ -23,11 +23,37 @@
 </head>
 
 <body>
-
+  <div id="toolbar">
+    <div id="toolbarContent">
+      <div class="toolbarElement diagramElement" data-type="entity" id="entityElement" draggable="true">
+        <svg cursor="pointer" width="54px" height="34px" viewBox="0 0 54 34">
+          <rect width="50" height="30" x="1" y="1" fill="white" style="stroke:black;stroke-width:2;" />
+        </svg>
+      </div>
+      <div class="toolbarElement diagramElement" data-type="relationship" id="relationshipElement" draggable="true">
+        <svg cursor="pointer" width="54px" height="34px" viewBox="0 0 54 34">
+          <polygon width="50" height="30" points="0,15 25,30 50,15 25,0" x="0" y="0" fill="white" style="stroke:black;stroke-width:2;" />
+        </svg>
+      </div>
+      <div class="toolbarElement diagramElement" data-type="attribute" id="attributeElement" draggable="true">
+        <svg cursor="pointer" width="54px" height="40px" viewBox="0 0 54 40">
+          <ellipse width="50" height="30" cx="26" cy="16" rx="25" ry="15" fill="white" style="stroke:black;stroke-width:2;" />
+        </svg>
+      </div>
+      <div class="toolbarElement" id="download">
+          <img src="img/download.png" height="34"/>
+      </div>
+      <div class="toolbarElement" id="import">
+        <img src="img/import.png" height="34"/>
+        <input type='file' id='file-input' />
+      </div>
+      <div class="toolbarElement" id="save">
+        <img src="img/save.png" height="34"/>
+      </div>
+    </div>
+  </div>
   <div id="paper">
   </div>
-  <button id="createEntity">Añadir entidad</button>
-  <button id="createRelation">Añadir relación</button>
   <button id="exportAsPng">Exportar png</button>
   <button id="exportAsJson">Exportar json</button>
   <img id="img-container"/>

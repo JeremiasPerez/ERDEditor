@@ -66,9 +66,11 @@ paper.on('cell:pointermove element:pointermove link:pointermove', (cellView, evt
 
 paper.on('blank:pointermove', (evt, x, y) => {
   if (!paper.model.get('linking')) return
+  console.log('moving')
   let link = document.querySelector('[model-id=connectionLink]')
   let linkEl = paper.findView(link)
   linkEl.model.prop('target', {x:x, y:y})
+  linkEl.model.attr('line/display',null)
 })
 
 const validateConnection = (source, target) => {
@@ -204,9 +206,9 @@ paper.on('blank:pointerup', (evt, x, y) => {
   linkEl.model.attr('line/display','none')
 })
 
-document.querySelector('#createEntity').addEventListener('click',(e) => {
+let createEntity = (x, y) => {
   const en = new Entity()
-  en.position(500, 150);
+  en.position(x, y);
   en.addTo(graph);
   const elementView = en.findView(paper)
   const removeButton = new elementTools.Remove({
@@ -218,16 +220,16 @@ document.querySelector('#createEntity').addEventListener('click',(e) => {
   const toolsView = new dia.ToolsView({
     tools: [
       removeButton,
-      attributeButton,
+      //attributeButton,
       settingsButton
     ]
   });
   elementView.addTools(toolsView);
   elementView.hideTools();
-})
-document.querySelector('#createRelation').addEventListener('click',(e) => {
+}
+let createRelation = (x,y) => {
   const en = new Relation()
-  en.position(500, 150);
+  en.position(x, y);
   en.addTo(graph);
   const elementView = en.findView(paper)
   const removeButton = new elementTools.Remove({
@@ -240,18 +242,73 @@ document.querySelector('#createRelation').addEventListener('click',(e) => {
   const toolsView = new dia.ToolsView({
     tools: [
       removeButton,
-      attributeButton,
+      //attributeButton,
       settingsButton,
       linkButton
     ]
   });
   elementView.addTools(toolsView);
   elementView.hideTools();
+}
+
+let createAttribute = (x,y) => {
+  const at1 = new Attribute()
+  at1.position(x, y);
+  at1.addTo(graph);
+
+  const elementView = at1.findView(paper)
+  const removeButton = new elementTools.Remove({
+    x: 0,
+    y: "50%",
+    scale: 1.5
+  });
+  const settingsButton = new SettingsButton()
+  const linkButton = new LinkButton()
+  const toolsView = new dia.ToolsView({
+    tools: [
+      removeButton,
+      settingsButton,
+      linkButton
+    ]
+  })
+  elementView.addTools(toolsView)
+  elementView.hideTools()
+}
+
+document.querySelector('#download').addEventListener('click',(e) => {
+  let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(graph.toJSON()))
+  var a = document.createElement("a");
+  a.click();
+  a.setAttribute("href",dataStr)
+  a.setAttribute("download", "diagram.json")
+  document.body.appendChild(a);
+  a.click()
+  document.removeChild(a)
 })
 
-document.querySelector('#exportAsJson').addEventListener('click',(e) => {
-  console.log(graph.toJSON())
+document.querySelector('#import').addEventListener('click',(e) => {
+  let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(graph.toJSON()))
+  var a = document.createElement("a");
+  a.click();
+  a.setAttribute("href",dataStr)
+  a.setAttribute("download", "diagram.json")
+  document.body.appendChild(a);
+  a.click()
+  document.removeChild(a)
 })
+
+document.querySelector('#file-input').addEventListener('change',(ev) => {
+  const reader = new FileReader()
+  reader.onload = (e) => console.log('file contents:', ev.currentTarget.result)
+
+  reader.addEventListener("load", (e) => {
+    console.log(e.currentTarget.result, JSON.parse(reader.result))
+  });
+
+  reader.readAsText(ev.currentTarget.files[0]);
+
+})
+
 
 document.querySelector('#exportAsPng').addEventListener('click',async (e) => {
   /*const dataHeader = 'data:image/svg+xml;charset=utf-8'
@@ -344,4 +401,35 @@ document.addEventListener('input',(e) => {
 
 document.querySelector('#settingsCloseButton').addEventListener('click', (e) => {
   document.querySelector('#settingsContainer').classList.remove('visible')
+})
+
+let dragStart = (ev, type) => {
+  ev.dataTransfer.setData('elementType',type)
+}
+
+document.querySelectorAll('.toolbarElement.diagramElement').forEach((el) => {
+  el.addEventListener('dragstart',(e) => {
+    dragStart(e, el.dataset.type)
+  })
+})
+
+document.querySelector('#paper').addEventListener('dragover',(e) => {
+  e.preventDefault()
+})
+
+document.querySelector('#paper').addEventListener('drop', (e) => {
+  let type = e.dataTransfer.getData('elementType')
+  let p = paper.clientToLocalPoint({ x: e.clientX, y: e.clientY });
+  switch (type){
+    case 'entity':
+      createEntity(p.x,p.y)
+      break
+    case 'relationship':
+      createRelation(p.x,p.y)
+      break
+    case 'attribute':
+      createAttribute(p.x,p.y)
+      break
+  }
+  e.preventDefault()
 })

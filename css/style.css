@@ -407,3 +407,20 @@ input:checked + .slider::before {
   cursor:move;
   border-color: #ccc;
 }
+#toolbar{
+  margin-top: 20px;
+}
+#toolbarContent{
+  display:flex;
+}
+body{
+  margin:2%;
+  display: flex;
+  justify-items: center;
+  align-items: center;
+  flex-direction: column;
+  background-color:rgb(249, 251, 253);
+}
+#download{
+  cursor:pointer;
+}

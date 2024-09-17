@@ -191,8 +191,9 @@ export const LinkButton = elementTools.Button.extend({
       let link = document.querySelector('[model-id=connectionLink]')
       let linkEl = this.paper.findView(link)
       linkEl.model.prop('source',this.model.getAbsolutePointFromRelative(bbox.width/2,bbox.height/2))
-      linkEl.model.attr('line/display',null)
-      //linkEl.model.prop('target',this.model.getAbsolutePointFromRelative(75,0))
+      // Estas dos líneas no van aquí porque Jointjs no funciona bien en este caso
+      //linkEl.model.prop('target',this.model.getAbsolutePointFromRelative(bbox.width/2,0))
+      //linkEl.model.attr('line/display',null)
       this.paper.el.dispatchEvent(new MouseEvent("mousedown"))
     }
   }
@@ -337,6 +338,11 @@ export class Attribute extends dia.Element {
           x: 5,
           y: 5
         },
+        attributeName: {
+          style:{
+            textDecorationThickness: '2px'
+          }
+        },
         isMultivaluated: false,
         isDerivated: false,
         isKey: false,
@@ -360,8 +366,8 @@ export class Attribute extends dia.Element {
 
   toggleKey() {
     this.attr('isKey',!this.attr('isKey'));
-    if(this.attr('attributeName/style/textDecoration') != null) this.attr('attributeName/style/textDecoration',null)
-    else this.attr('attributeName/style/textDecoration', 'underline')
+    if(this.attr('attributeName/style/textDecorationLine') != null) this.attr('attributeName/style/textDecorationLine',null)
+    else this.attr('attributeName/style/textDecorationLine', 'underline')
   }
 
   togglePartialKey() {
