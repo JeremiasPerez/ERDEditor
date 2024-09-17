@@ -26,6 +26,8 @@ const showSettings = (element) => {
       settingsCont = document.querySelector('#relationSettingsContent').content.cloneNode(true);
       settingsCont.querySelector("#isIndentifierInput").checked = element.model.attr('isIdentifier')
       settingsCont.querySelector("#isIndentifierInput").addEventListener('change', () => {element.model.toggleIdentifier()})
+      settingsCont.querySelector('#showRoleInput').checked = element.model.attr('showRoles')
+      settingsCont.querySelector('#showRoleInput').addEventListener('change', () => {element.model.toggleShowRoles()})
       break
   }
   settingsContent.appendChild(settingsCont);
@@ -80,6 +82,22 @@ export const AttributeButton = elementTools.Button.extend({
         }
       });
       link.addTo(this.paper.model);
+
+      let linkView = link.findView(this.paper);
+
+
+      const verticesTool = new linkTools.Vertices();
+      const segmentsTool = new linkTools.Segments();
+      const remButton = new linkTools.Remove();
+      const linkToolsView = new dia.ToolsView({
+        tools: [
+          verticesTool, segmentsTool,
+          remButton
+        ]
+      })
+      linkView.addTools(linkToolsView);
+
+
       const elementView = at1.findView(this.paper)
       const removeButton = new elementTools.Remove({
         x: 0,
@@ -179,23 +197,6 @@ export const LinkButton = elementTools.Button.extend({
   }
 });
 
-
-const verticesTool = new linkTools.Vertices();
-const segmentsTool = new linkTools.Segments();
-const sourceAnchorTool = new linkTools.SourceAnchor();
-const targetAnchorTool = new linkTools.TargetAnchor();
-const boundaryTool = new linkTools.Boundary();
-const removeButton = new linkTools.Remove();
-
-export const toolsView = new dia.ToolsView({
-  tools: [
-    verticesTool, segmentsTool,
-    sourceAnchorTool, targetAnchorTool,
-    boundaryTool, removeButton
-  ]
-})
-
-
 const entityMarkup = util.svg/* xml */`
     <rect @selector="entityBody"/>
     <rect @selector="innerEntityBody"/>
@@ -280,7 +281,7 @@ const attributteMarkup = util.svg/* xml */`
     <ellipse @selector="innerAttributeBody"/>
     <foreignObject @selector="elementName">
       <div @selector="content" xmlns="http://www.w3.org/1999/xhtml" class="elementNameContainer">
-        <div @selector="attributeName" class="elementNameInput" contenteditable="true" style="text-transform:lowercase" data-placeholder="atributo" autocomplete="off" autocorrect="off" spellcheck="false"></div>
+        <div @selector="attributeName" class="elementNameInput" contenteditable="true" style="text-transform:capitalize" data-placeholder="atributo" autocomplete="off" autocorrect="off" spellcheck="false"></div>
       </div>
     </foreignObject>`
 export class Attribute extends dia.Element {
@@ -374,7 +375,7 @@ const relationMarkup = util.svg/* xml */`
     <polygon @selector="innerRelationBody"/>
     <foreignObject @selector="elementName">
       <div @selector="content" xmlns="http://www.w3.org/1999/xhtml" class="elementNameContainer">
-        <div @selector="attributeName" class="elementNameInput" contenteditable="true" style="text-transform:lowercase" data-placeholder="relación" autocomplete="off" autocorrect="off" spellcheck="false"></div>
+        <div @selector="attributeName" class="elementNameInput" contenteditable="true" style="text-transform:uppercase" data-placeholder="relación" autocomplete="off" autocorrect="off" spellcheck="false"></div>
       </div>
     </foreignObject>`
 export class Relation extends dia.Element {
@@ -424,6 +425,7 @@ export class Relation extends dia.Element {
           y: 5
         },
         isIdentifier: false,
+        showRoles: false,
         label: ''
       }
     }
@@ -433,5 +435,21 @@ export class Relation extends dia.Element {
     this.attr('isIdentifier',!this.attr('isIdentifier'));
     if(this.attr('innerRelationBody/display') != null) this.attr('innerRelationBody/display',null)
     else this.attr('innerRelationBody/display', 'none')
+  }
+  toggleShowRoles() {
+    this.attr('showRoles',!this.attr('showRoles'))
+    let toggleLink = (link, display) => {
+      let labels = link.labels()
+      let rolLabelPos = labels.reduce((pos,l,i) => {
+        if (l.attrs.roleLabel != null) pos.push(i)
+        return pos
+      },[])
+      rolLabelPos.forEach((i) => {
+        let value = display ? null : 'none'
+        link.label(i, {attrs: {roleLabel: {display: value}}})
+      })
+    }
+    let links = this.graph.getConnectedLinks(this)
+    links.forEach((l) => {toggleLink(l,this.attr('showRoles'))})
   }
 }

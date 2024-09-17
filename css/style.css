@@ -255,7 +255,7 @@ textarea {
 
 [contentEditable=true]:empty:before {
   content: attr(data-placeholder);
-  color: gray
+  color: #ccc;
 }
 
 [contentEditable=true]:hover{
@@ -374,4 +374,36 @@ input:checked + .slider::before {
 
 #paper{
   border: solid 1px black;
+}
+
+.linkLabelContainer{
+  display:flex;
+  justify-content: center;
+  align-content: center;
+  align-items: center;
+  border:dashed 2px transparent;
+}
+.linkLabelContainer:hover{
+  cursor:move;
+  border-color: #ccc;
+}
+
+.linkRoleInput{
+  padding-left: 2ch;
+  padding-right: 2ch;
+}
+
+.linkRoleLabelContainer {
+  width:100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border:dashed 2px transparent;
+  box-sizing: border-box;
+}
+
+.linkRoleLabelContainer:hover{
+  cursor:move;
+  border-color: #ccc;
 }

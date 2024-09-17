@@ -1,5 +1,7 @@
 import {util, dia, shapes, elementTools, linkTools } from '../node_modules/@joint/core/joint.mjs';
-import {Entity, Attribute, Relation, AttributeButton, SettingsButton, LinkButton, toolsView} from './Node.js';
+import {Entity, Attribute, Relation, AttributeButton, SettingsButton, LinkButton} from './Node.js';
+
+
 
 const namespace = {
   ...shapes,
@@ -19,7 +21,6 @@ const paper = new dia.Paper({
   background: { color: 'white' },
   cellViewNamespace: namespace,
   guard: (e) => e.target.getAttribute('contenteditable') != null,
-  snapLabels: true,
   interactive: {
     linkMove: false,
     labelMove: true
@@ -49,6 +50,10 @@ paper.on('element:mouseenter', elementView => {
   elementView.showTools();
 });
 paper.on('element:mouseleave', elementView => {
+  elementView.hideTools();
+});
+
+paper.on('cell:mouseleave', elementView => {
   elementView.hideTools();
 });
 
@@ -83,6 +88,69 @@ const validateConnection = (source, target) => {
   return con
 }
 
+const manageEntityRelationshipLink = (link, source, target) => {
+
+  const labelMarkup = util.svg/* xml */`
+  <foreignObject @selector="linkLabel">
+    <div @selector="content" xmlns="http://www.w3.org/1999/xhtml" class="linkLabelContainer">
+      <label @selector="linkLabelOpeningBrackets">(</label>
+      <label @selector="linkLabelMinCard" class="linkCardInput" contenteditable="true" style="text-transform:uppercase" data-placeholder="X" autocomplete="off" autocorrect="off" spellcheck="false"></label>
+      <label @selector="linkLabelOpeningComa">,</label>
+      <label @selector="linkLabelMaxCard" class="linkCardInput" contenteditable="true" style="text-transform:uppercase" data-placeholder="X" autocomplete="off" autocorrect="off" spellcheck="false"></label>
+      <label @selector="linkLabelClosingBrackets">)</label>
+    </div>
+  </foreignObject>`
+  link.appendLabel({
+    markup: labelMarkup,
+    attrs: {
+      linkLabel: {
+        width: '6ch',
+        height: 30,
+        cursor: 'default'
+      }
+    },
+    position: {
+      distance: 0.3,
+      offset: 40
+    }
+  })
+
+  const roleLabelMarkup = util.svg/* xml */`
+  <foreignObject @selector="roleLabel">
+    <div @selector="content" xmlns="http://www.w3.org/1999/xhtml" class="linkRoleLabelContainer">
+      <div @selector="linkRoleLabel" class="linkRoleInput" contenteditable="true" style="text-transform:lowercase" data-placeholder="rol" autocomplete="off" autocorrect="off" spellcheck="false"></div>
+    </div>
+  </foreignObject>`
+  link.appendLabel({
+    markup: roleLabelMarkup,
+    attrs: {
+      roleLabel: {
+        width: '5ch',
+        height: 30,
+        cursor: 'default'
+      }
+    },
+    position: {
+      distance: 0.6,
+      offset: 30,
+      args: {
+        keepGradient: true,
+        ensureLegibility: true
+      }
+    }
+  })
+  let sourceType = source.model.get('type')
+  let relationship = sourceType == 'erd.Relation' ? source : target
+  if (!relationship.model.attr('showRoles')){
+    let labels = link.labels()
+    link.labels(labels.map((l) => {
+      if (l.attrs.roleLabel == null) return l
+      l.attrs.roleLabel.display = 'none'
+      return l
+    }))
+  }
+}
+
 const manageConnection = (target) => {
   const sourceId = paper.model.get('linkSource')
   const source = paper.findView(document.querySelector('#'+sourceId))
@@ -98,35 +166,19 @@ const manageConnection = (target) => {
     }
   })
   if (con.includes('erd.Entity') && con.includes('erd.Relation')){
-
-    const labelMarkup = util.svg/* xml */`
-  <foreignObject @selector="linkLabel">
-    <div @selector="content" xmlns="http://www.w3.org/1999/xhtml" class="linkLabelContainer">
-      <label @selector="linkLabelOpeningBrackets">(</label>
-      <label @selector="linkLabelMinCard" class="linkCardInput" contenteditable="true" style="text-transform:uppercase" data-placeholder="X" autocomplete="off" autocorrect="off" spellcheck="false"></label>
-      <label @selector="linkLabelOpeningComa">,</label>
-      <label @selector="linkLabelMaxCard" class="linkCardInput" contenteditable="true" style="text-transform:uppercase" data-placeholder="X" autocomplete="off" autocorrect="off" spellcheck="false"></label>
-      <label @selector="linkLabelClosingBrackets">)</label>
-    </div>
-  </foreignObject>`
-    link.appendLabel({
-      markup: labelMarkup,
-      attrs: {
-        linkLabel: {
-          width: '5ch',
-          height: 20
-        }
-      },
-      position: {
-        distance: 0.3,
-        offset: 40
-      }
-    })
+    manageEntityRelationshipLink(link, source, target)
   }
 
   link.addTo(paper.model)
 
-  var linkView = link.findView(paper);
+  // Add link tools
+  let linkView = link.findView(paper);
+  const verticesTool = new linkTools.Vertices();
+  const segmentsTool = new linkTools.Segments();
+  const removeButton = new linkTools.Remove();
+  const toolsView = new dia.ToolsView({
+    tools: [verticesTool, segmentsTool, removeButton]
+  })
   linkView.addTools(toolsView);
 }
 
@@ -275,6 +327,15 @@ document.addEventListener('input',(e) => {
     let content = e.target.innerText.trim()
     const card = Number(content)
     if(content != 'N' && content != 'n' && (Number.isNaN(card) || card < 0 || !Number.isInteger(card))) e.target.innerText = ''
+  }
+  else if (e.target.classList.contains('linkRoleInput')){
+    // todo - resize label box
+    let label = e.target.closest('.label')
+    let link = paper.findView(e.target.closest('.joint-link'))
+    console.log(link)
+    let labels = link.model.labels()
+    let rolLabelPos = labels.findIndex((l) => l.id == label.id)
+    link.model.label(rolLabelPos, {attrs: {roleLabel: {width: e.target.offsetWidth}}})
   }
 })
 
