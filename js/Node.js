@@ -3,10 +3,13 @@ import { dia, shapes, util, elementTools, linkTools } from '../node_modules/@joi
 
 
 const showSettings = (element) => {
-  document.querySelector('#settingsContainer').classList.add('visible')
+  let container = document.querySelector('#settingsContainer')
+  container.classList.add('visible')
   const settingsContent = document.querySelector('#settingsContent')
   settingsContent.innerHTML = ''
   let settingsCont
+  let elementPos = element.model.getBBox().topRight();
+  let absPos = element.paper.localToClientPoint(elementPos);
   switch (element.model.attributes['type']){
     case 'erd.Entity':
       settingsCont = document.querySelector('#entitySettingsContent').content.cloneNode(true);
@@ -31,6 +34,8 @@ const showSettings = (element) => {
       break
   }
   settingsContent.appendChild(settingsCont);
+  container.style.left = (absPos.x+30)+'px'
+  container.style.top = (absPos.y-((container.offsetHeight-element.model.getBBox().height)/2))+'px'
 }
 
 export const AttributeButton = elementTools.Button.extend({
@@ -87,13 +92,9 @@ export const AttributeButton = elementTools.Button.extend({
 
 
       const verticesTool = new linkTools.Vertices();
-      const segmentsTool = new linkTools.Segments();
       const remButton = new linkTools.Remove();
       const linkToolsView = new dia.ToolsView({
-        tools: [
-          verticesTool, segmentsTool,
-          remButton
-        ]
+        tools: [verticesTool, remButton]
       })
       linkView.addTools(linkToolsView);
 

@@ -123,6 +123,10 @@ const manageEntityRelationshipLink = (link, source, target) => {
   </foreignObject>`
   link.appendLabel({
     markup: roleLabelMarkup,
+    initialSize: {
+      width: '5ch',
+      height: 30
+    },
     attrs: {
       roleLabel: {
         width: '5ch',
@@ -174,10 +178,9 @@ const manageConnection = (target) => {
   // Add link tools
   let linkView = link.findView(paper);
   const verticesTool = new linkTools.Vertices();
-  const segmentsTool = new linkTools.Segments();
   const removeButton = new linkTools.Remove();
   const toolsView = new dia.ToolsView({
-    tools: [verticesTool, segmentsTool, removeButton]
+    tools: [verticesTool, removeButton]
   })
   linkView.addTools(toolsView);
 }
