@@ -1,6 +1,5 @@
 import {util, dia, shapes, elementTools, linkTools } from '../node_modules/@joint/core/joint.mjs';
-import {Entity, Attribute, Relation, AttributeButton, SettingsButton, LinkButton, RelationView} from './Node.js';
-
+import {Entity, Attribute, Relation, AttributeButton, SettingsButton, LinkButton, RelationView, AttributeView, EntityView} from './Node.js';
 
 
 const namespace = {
@@ -9,11 +8,12 @@ const namespace = {
     Attribute,
     Entity,
     Relation,
-    RelationView
+    RelationView,
+    AttributeView,
+    EntityView
   }
 };
-const graph = new dia.Graph({}, { cellNamespace: namespace });
-
+const graph = new dia.Graph({linking: false}, { cellNamespace: namespace });
 const paper = new dia.Paper({
   el: document.getElementById('paper'),
   model: graph,
@@ -28,18 +28,36 @@ const paper = new dia.Paper({
   }
 });
 
-paper.model.set('linking',false)
+// CREAR CONEXIÓN AUXILIAR
+const initAuxConnection = () => {
+  const link = new shapes.standard.Link();
+  link.set('id','connectionLink')
+  link.prop('source', { x: 0, y: 0 });
+  link.prop('target', { x: 0, y: 0 });
+  link.attr('line/stroke', 'black');
+  link.attr('line/strokeWidth', 1);
+  link.attr('line/targetMarker', 'none');
+  link.attr('line/display','none')
+  link.addTo(graph);
+}
+initAuxConnection()
 
-
-const link = new shapes.standard.Link();
-link.set('id','connectionLink')
-link.prop('source', { x: 0, y: 0 });
-link.prop('target', { x: 0, y: 0 });
-link.attr('line/stroke', 'black');
-link.attr('line/strokeWidth', 1);
-link.attr('line/targetMarker', 'none');
-link.attr('line/display','none')
-link.addTo(graph);
+// CREACIÓN ELEMENTOS
+let createEntity = (x, y) => {
+  const en = new Entity()
+  en.position(x-en.getBBox().width/2, y-en.getBBox().height/2);
+  en.addTo(graph);
+}
+let createRelation = (x,y) => {
+  const en = new Relation()
+  en.position(x-en.getBBox().width/2, y-en.getBBox().height/2);
+  en.addTo(graph);
+}
+let createAttribute = (x,y) => {
+  const at1 = new Attribute()
+  at1.position(x-at1.getBBox().width/2, y-at1.getBBox().height/2);
+  at1.addTo(graph);
+}
 
 
 /*
@@ -53,21 +71,17 @@ paper.on('element:mouseenter', elementView => {
 paper.on('element:mouseleave', elementView => {
   elementView.hideTools();
 });
-
 paper.on('cell:mouseleave', elementView => {
   elementView.hideTools();
 });
-
 paper.on('cell:pointermove element:pointermove link:pointermove', (cellView, evt, x, y) => {
   if (!paper.model.get('linking')) return
   let link = document.querySelector('[model-id=connectionLink]')
   let linkEl = paper.findView(link)
   linkEl.model.prop('target', {x:x, y:y})
 })
-
 paper.on('blank:pointermove', (evt, x, y) => {
   if (!paper.model.get('linking')) return
-  console.log('moving')
   let link = document.querySelector('[model-id=connectionLink]')
   let linkEl = paper.findView(link)
   linkEl.model.prop('target', {x:x, y:y})
@@ -83,14 +97,10 @@ const validateConnection = (source, target) => {
     ['erd.Entity','erd.Attribute'],['erd.Relation','erd.Attribute'],['erd.Attribute','erd.Attribute'],['erd.Relation','erd.Entity']
   ]
   let con = validCons.find(((el) => (el[0] == sourceType && el[1] == targetType) || (el[1] == sourceType && el[0] == targetType)))
-  //if(con == null) return false
 
   // TODO: attribute can only be connected to one element
-  console.log(graph.getConnectedLinks(source))
-
   return con
 }
-
 const manageEntityRelationshipLink = (link, source, target) => {
 
   const labelMarkup = util.svg/* xml */`
@@ -157,7 +167,6 @@ const manageEntityRelationshipLink = (link, source, target) => {
     }))
   }
 }
-
 const manageConnection = (target) => {
   const sourceId = paper.model.get('linkSource')
   const source = paper.findView(document.querySelector('#'+sourceId))
@@ -192,11 +201,9 @@ const manageConnection = (target) => {
 paper.on('link:mouseenter', (linkView) => {
   linkView.showTools();
 });
-
 paper.on('link:mouseleave', (linkView) => {
   linkView.hideTools();
 });
-
 paper.on('blank:pointerup', (evt, x, y) => {
   if (!paper.model.get('linking')) return
   let el = paper.findViewsFromPoint({x: x, y: y})
@@ -207,75 +214,98 @@ paper.on('blank:pointerup', (evt, x, y) => {
   linkEl.model.attr('line/display','none')
 })
 
-let createEntity = (x, y) => {
-  const en = new Entity()
-  en.position(x-en.getBBox().width/2, y-en.getBBox().height/2);
-  en.addTo(graph);
-  const elementView = en.findView(paper)
-  const removeButton = new elementTools.Remove({
-    scale: 1.5,
-    y: '50%'
-  });
-  const attributeButton = new AttributeButton();
-  const settingsButton = new SettingsButton();
-  const toolsView = new dia.ToolsView({
-    tools: [
-      removeButton,
-      //attributeButton,
-      settingsButton
-    ]
-  });
-  elementView.addTools(toolsView);
-  elementView.hideTools();
-}
-let createRelation = (x,y) => {
-  const en = new Relation()
-  en.position(x-en.getBBox().width/2, y-en.getBBox().height/2);
-  en.addTo(graph);
-  const elementView = en.findView(paper)
-  const removeButton = new elementTools.Remove({
-    scale: 1.5,
-    y: '50%'
-  });
-  const attributeButton = new AttributeButton();
-  const settingsButton = new SettingsButton();
-  const linkButton = new LinkButton();
-  const toolsView = new dia.ToolsView({
-    tools: [
-      removeButton,
-      //attributeButton,
-      settingsButton,
-      linkButton
-    ]
-  });
-  elementView.addTools(toolsView);
-  elementView.hideTools();
-}
 
-let createAttribute = (x,y) => {
-  const at1 = new Attribute()
-  at1.position(x-at1.getBBox().width/2, y-at1.getBBox().height/2);
-  at1.addTo(graph);
+document.addEventListener('input',(e) => {
+  /*if ('placeholder' in e.target.dataset && e.target.innerText.trim() == ''){
+    while (e.target.firstChild) e.target.removeChild(e.target.firstChild)
+    let containerEl = paper.findView(e.target.closest('.joint-element'))
+    containerEl.model.prop('size/width',containerEl.model.get('initialSize').width)
+  }
+  else if (e.target.classList.contains('elementNameInput')){
+    let containerEl = paper.findView(e.target.closest('.joint-element'))
+    containerEl.model.attr('label',e.target.innerText.trim())
+    containerEl.model.prop('size/width',e.target.offsetWidth)
+  }
+  else if (e.target.classList.contains('linkCardInput')){
+    let content = e.target.innerText.trim()
+    const card = Number(content)
+    if(content != 'N' && content != 'n' && (Number.isNaN(card) || card < 0 || !Number.isInteger(card))) e.target.innerText = ''
+  }
+  else if (e.target.classList.contains('linkRoleInput')){
+    // todo - resize label box
+    let label = e.target.closest('.label')
+    let link = paper.findView(e.target.closest('.joint-link'))
+    let labels = link.model.labels()
+    let rolLabelPos = labels.findIndex((l) => l.id == label.id)
+    link.model.label(rolLabelPos, {attrs: {roleLabel: {width: e.target.offsetWidth}}})
+  }*/
+})
 
-  const elementView = at1.findView(paper)
-  const removeButton = new elementTools.Remove({
-    x: 0,
-    y: "50%",
-    scale: 1.5
-  });
-  const settingsButton = new SettingsButton()
-  const linkButton = new LinkButton()
-  const toolsView = new dia.ToolsView({
-    tools: [
-      removeButton,
-      settingsButton,
-      linkButton
-    ]
+// VENTANA OPCIONES
+document.querySelector('#settingsCloseButton').addEventListener('click', (e) => {
+  document.querySelector('#settingsContainer').classList.remove('visible')
+})
+
+// DRAG & DROP ELEMENTOS
+let dragStart = (ev, type) => {
+  ev.dataTransfer.setData('elementType',type)
+}
+document.querySelectorAll('.toolbarElement.diagramElement').forEach((el) => {
+  el.addEventListener('dragstart',(e) => {
+    dragStart(e, el.dataset.type)
   })
+})
+document.querySelector('#paper').addEventListener('dragover',(e) => {
+  e.preventDefault()
+})
+document.querySelector('#paper').addEventListener('drop', (e) => {
+  let type = e.dataTransfer.getData('elementType')
+  let p = paper.clientToLocalPoint({ x: e.clientX, y: e.clientY });
+  switch (type){
+    case 'entity':
+      createEntity(p.x,p.y)
+      break
+    case 'relationship':
+      createRelation(p.x,p.y)
+      break
+    case 'attribute':
+      createAttribute(p.x,p.y)
+      break
+  }
+  e.preventDefault()
+})
+
+const addTools = (model) => {
+  const types = ['erd.Relation','erd.Entity','erd.Attribute']
+  if(!types.includes(model.prop('type'))) return
+  const elementView = model.findView(paper)
+  let tools = []
+  switch (model.prop('type')){
+    case 'erd.Relation':
+      tools = [new elementTools.Remove({scale: 1.5,y: '50%'}),
+        new SettingsButton(),
+        new LinkButton()]
+      break
+    case 'erd.Entity':
+      tools = [new elementTools.Remove({scale: 1.5,y: '50%'}),
+        new SettingsButton()]
+      break
+    case 'erd.Attribute':
+      tools = [new elementTools.Remove({scale: 1.5,y: '50%'}),
+        new SettingsButton(),
+        new LinkButton()]
+      break
+  }
+  const toolsView = new dia.ToolsView({tools: tools})
   elementView.addTools(toolsView)
   elementView.hideTools()
 }
+graph.on('add', (model, collection, options) => {
+  addTools(model)
+})
 
+
+// BOTONES
 document.querySelector('#download').addEventListener('click',(e) => {
   let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(graph.toJSON()))
   var a = document.createElement("a");
@@ -286,20 +316,17 @@ document.querySelector('#download').addEventListener('click',(e) => {
   a.click()
   document.body.removeChild(a)
 })
-
 document.querySelector('#import').addEventListener('click',(e) => {
   let fileInput = document.querySelector('#file-input')
   fileInput.click()
 })
-
 document.querySelector('#file-input').addEventListener('change',(ev) => {
   const reader = new FileReader()
-  //reader.onload = (e) => console.log('file contents:', e.target.result)
-
   reader.addEventListener("load", (e) => {
     graph.fromJSON(JSON.parse(reader.result))
+    let cells = graph.getCells()
+    cells.forEach((c) => addTools(c))
   })
-
   reader.readAsText(ev.currentTarget.files[0]);
 
 })
@@ -352,78 +379,16 @@ document.querySelector('#file-input').addEventListener('change',(ev) => {
     $holder.appendChild($img)
   }
 
-  convertSVGtoImg()*/
+  convertSVGtoImg()
 
-  // todo -> antes de exportar, convertir los foreignObjects a texts
-  /*await svg2pngWasm.initialize(fetch('https://unpkg.com/svg2png-wasm/svg2png_wasm_bg.wasm'))
-  //const font = await fetch('./Roboto.ttf').then((res) => res.arrayBuffer());
-  /** @type {Uint8Array} */
-  /*const png = await svg2pngWasm.svg2png(
-    '<svg viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg">'+document.querySelector('#paper svg').innerHTML+'</svg>'
-  );
-  document.getElementById('img-container').src = URL.createObjectURL(
-    new Blob([png], { type: 'image/png' }),
-  );
+// todo -> antes de exportar, convertir los foreignObjects a texts
+await svg2pngWasm.initialize(fetch('https://unpkg.com/svg2png-wasm/svg2png_wasm_bg.wasm'))
+//const font = await fetch('./Roboto.ttf').then((res) => res.arrayBuffer());
+ @type {Uint8Array}
+Const png = await svg2pngWasm.svg2png(
+  '<svg viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg">'+document.querySelector('#paper svg').innerHTML+'</svg>'
+);
+document.getElementById('img-container').src = URL.createObjectURL(
+  new Blob([png], { type: 'image/png' }),
+);
 })*/
-
-
-document.addEventListener('input',(e) => {
-  if ('placeholder' in e.target.dataset && e.target.innerText.trim() == ''){
-    while (e.target.firstChild) e.target.removeChild(e.target.firstChild)
-    let containerEl = paper.findView(e.target.closest('.joint-element'))
-    containerEl.model.prop('size/width',containerEl.model.get('initialSize').width)
-  }
-  else if (e.target.classList.contains('elementNameInput')){
-    let containerEl = paper.findView(e.target.closest('.joint-element'))
-    containerEl.model.attr('label',e.target.innerText.trim())
-    containerEl.model.prop('size/width',e.target.offsetWidth)
-  }
-  else if (e.target.classList.contains('linkCardInput')){
-    let content = e.target.innerText.trim()
-    const card = Number(content)
-    if(content != 'N' && content != 'n' && (Number.isNaN(card) || card < 0 || !Number.isInteger(card))) e.target.innerText = ''
-  }
-  else if (e.target.classList.contains('linkRoleInput')){
-    // todo - resize label box
-    let label = e.target.closest('.label')
-    let link = paper.findView(e.target.closest('.joint-link'))
-    let labels = link.model.labels()
-    let rolLabelPos = labels.findIndex((l) => l.id == label.id)
-    link.model.label(rolLabelPos, {attrs: {roleLabel: {width: e.target.offsetWidth}}})
-  }
-})
-
-document.querySelector('#settingsCloseButton').addEventListener('click', (e) => {
-  document.querySelector('#settingsContainer').classList.remove('visible')
-})
-
-let dragStart = (ev, type) => {
-  ev.dataTransfer.setData('elementType',type)
-}
-
-document.querySelectorAll('.toolbarElement.diagramElement').forEach((el) => {
-  el.addEventListener('dragstart',(e) => {
-    dragStart(e, el.dataset.type)
-  })
-})
-
-document.querySelector('#paper').addEventListener('dragover',(e) => {
-  e.preventDefault()
-})
-
-document.querySelector('#paper').addEventListener('drop', (e) => {
-  let type = e.dataTransfer.getData('elementType')
-  let p = paper.clientToLocalPoint({ x: e.clientX, y: e.clientY });
-  switch (type){
-    case 'entity':
-      createEntity(p.x,p.y)
-      break
-    case 'relationship':
-      createRelation(p.x,p.y)
-      break
-    case 'attribute':
-      createAttribute(p.x,p.y)
-      break
-  }
-  e.preventDefault()
-})
