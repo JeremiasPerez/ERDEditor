@@ -1,4 +1,4 @@
-import { dia, shapes, util, elementTools, linkTools } from '../node_modules/@joint/core/joint.mjs';
+import { dia, shapes, util, elementTools, linkTools, mvc } from '../node_modules/@joint/core/joint.mjs';
 
 
 
@@ -288,7 +288,7 @@ const attributteMarkup = util.svg/* xml */`
     </foreignObject>`
 export class Attribute extends dia.Element {
   preinitialize() {
-    this.markup = attributteMarkup;
+    this.markup = attributteMarkup
   }
 
   defaults() {
@@ -377,6 +377,7 @@ export class Attribute extends dia.Element {
   }
 }
 
+
 const relationMarkup = util.svg/* xml */`
     <polygon @selector="relationBody"/>
     <polygon @selector="innerRelationBody"/>
@@ -389,7 +390,11 @@ export class Relation extends dia.Element {
   preinitialize() {
     this.markup = relationMarkup;
   }
-
+  initialize() {
+    dia.Element.prototype.initialize.apply(this, arguments)
+    let label = this.attr('label')
+    if(label != null && typeof label === 'object') this.attr('label',Object.values(label).join(''))
+  }
   defaults() {
     const clipId = util.uuid();
 
@@ -458,5 +463,13 @@ export class Relation extends dia.Element {
     }
     let links = this.graph.getConnectedLinks(this)
     links.forEach((l) => {toggleLink(l,this.attr('showRoles'))})
+  }
+}
+
+export class RelationView extends dia.ElementView {
+  render() {
+    dia.ElementView.prototype.render.apply(this, arguments);
+    this.el.querySelector('.elementNameInput').innerText = this.model.attr('label')
+    return this;
   }
 }

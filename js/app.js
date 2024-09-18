@@ -1,5 +1,5 @@
 import {util, dia, shapes, elementTools, linkTools } from '../node_modules/@joint/core/joint.mjs';
-import {Entity, Attribute, Relation, AttributeButton, SettingsButton, LinkButton} from './Node.js';
+import {Entity, Attribute, Relation, AttributeButton, SettingsButton, LinkButton, RelationView} from './Node.js';
 
 
 
@@ -8,7 +8,8 @@ const namespace = {
   erd: {
     Attribute,
     Entity,
-    Relation
+    Relation,
+    RelationView
   }
 };
 const graph = new dia.Graph({}, { cellNamespace: namespace });
@@ -283,7 +284,7 @@ document.querySelector('#download').addEventListener('click',(e) => {
   a.setAttribute("download", "diagram.json")
   document.body.appendChild(a);
   a.click()
-  document.removeChild(a)
+  document.body.removeChild(a)
 })
 
 document.querySelector('#import').addEventListener('click',(e) => {
@@ -386,7 +387,6 @@ document.addEventListener('input',(e) => {
     // todo - resize label box
     let label = e.target.closest('.label')
     let link = paper.findView(e.target.closest('.joint-link'))
-    console.log(link)
     let labels = link.model.labels()
     let rolLabelPos = labels.findIndex((l) => l.id == label.id)
     link.model.label(rolLabelPos, {attrs: {roleLabel: {width: e.target.offsetWidth}}})
