@@ -1,5 +1,17 @@
 import {util, dia, shapes, elementTools, linkTools } from '../node_modules/@joint/core/joint.mjs';
-import {Entity, Attribute, Relation, AttributeButton, SettingsButton, LinkButton, RelationView, AttributeView, EntityView} from './Node.js';
+import {
+  Entity,
+  Attribute,
+  Relation,
+  AttributeButton,
+  SettingsButton,
+  LinkButton,
+  RelationView,
+  AttributeView,
+  EntityView,
+  AttributeLink,
+  RelationshipLink,
+} from './Node.js';
 
 
 const namespace = {
@@ -10,7 +22,9 @@ const namespace = {
     Relation,
     RelationView,
     AttributeView,
-    EntityView
+    EntityView,
+    AttributeLink,
+    RelationshipLink
   }
 };
 const graph = new dia.Graph({linking: false}, { cellNamespace: namespace });
@@ -172,29 +186,24 @@ const manageConnection = (target) => {
   const source = paper.findView(document.querySelector('#'+sourceId))
   const con = validateConnection(source, target)
   if (con == null) return
-  const link = new shapes.standard.Link({
-    source: source.model,
-    target: target.model,
-    attrs: {
-      line: {
-        targetMarker: 'none'
-      }
-    }
-  })
+
+  let link
   if (con.includes('erd.Entity') && con.includes('erd.Relation')){
-    manageEntityRelationshipLink(link, source, target)
+    link = new RelationshipLink({
+      source: source.model,
+      target: target.model,
+      attrs: {
+        showRoles: source.model.attr('showRoles')
+      }
+    })
   }
-
+  else{
+    link = new AttributeLink({
+      source: source.model,
+      target: target.model
+    })
+  }
   link.addTo(paper.model)
-
-  // Add link tools
-  let linkView = link.findView(paper);
-  const verticesTool = new linkTools.Vertices();
-  const removeButton = new linkTools.Remove();
-  const toolsView = new dia.ToolsView({
-    tools: [verticesTool, removeButton]
-  })
-  linkView.addTools(toolsView);
 }
 
 
@@ -216,6 +225,27 @@ paper.on('blank:pointerup', (evt, x, y) => {
 
 
 document.addEventListener('input',(e) => {
+  if(!e.target.classList.contains('linkLabelInput')) return
+  if(e.target.innerText.trim() == ''){
+    while (e.target.firstChild) e.target.removeChild(e.target.firstChild)
+  }
+  let label = e.target.closest('.label')
+  let link = paper.findView(e.target.closest('.joint-link'))
+  if(e.target.classList.contains('linkCardInput')){
+    let content = e.target.innerText.trim()
+    const card = Number(content)
+    if(content != 'N' && content != 'n' && (Number.isNaN(card) || card < 0 || !Number.isInteger(card))) e.target.innerText = ''
+    if(e.target.classList.contains('minCard')) link.model.attr('minCard',e.target.innerText)
+    else if(e.target.classList.contains('maxCard')) link.model.attr('maxCard',e.target.innerText)
+  } else if(e.target.classList.contains('linkRoleInput')){
+    let labels = link.model.labels()
+    let rolLabelPos = labels.findIndex((l) => l.id == label.id)
+    if(e.target.innerText.trim()=='') link.model.label(rolLabelPos, {attrs: {roleLabel: {width: '5ch'}}})
+    else link.model.label(rolLabelPos, {attrs: {roleLabel: {width: e.target.offsetWidth}}})
+    link.model.attr('role',e.target.innerText.trim())
+  }
+  console.log(link.model)
+  //let link = paper.findView(document.querySelector('#'+foreign.dataset.linkId))
   /*if ('placeholder' in e.target.dataset && e.target.innerText.trim() == ''){
     while (e.target.firstChild) e.target.removeChild(e.target.firstChild)
     let containerEl = paper.findView(e.target.closest('.joint-element'))
@@ -276,7 +306,7 @@ document.querySelector('#paper').addEventListener('drop', (e) => {
 })
 
 const addTools = (model) => {
-  const types = ['erd.Relation','erd.Entity','erd.Attribute']
+  const types = ['erd.Relation','erd.Entity','erd.Attribute','erd.AttributeLink','erd.RelationshipLink']
   if(!types.includes(model.prop('type'))) return
   const elementView = model.findView(paper)
   let tools = []
@@ -294,6 +324,12 @@ const addTools = (model) => {
       tools = [new elementTools.Remove({scale: 1.5,y: '50%'}),
         new SettingsButton(),
         new LinkButton()]
+      break
+    case 'erd.AttributeLink':
+      tools = [new linkTools.Vertices(), new linkTools.Remove()]
+      break
+    case 'erd.RelationshipLink':
+      tools = [new linkTools.Vertices(), new linkTools.Remove()]
       break
   }
   const toolsView = new dia.ToolsView({tools: tools})

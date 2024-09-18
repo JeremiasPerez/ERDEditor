@@ -491,7 +491,7 @@ export class Relation extends dia.Element {
 
   setShowRoles(bool) {
     this.attr('showRoles',bool)
-    let toggleLink = (link, display) => {
+    /*let toggleLink = (link, display) => {
       let labels = link.labels()
       let rolLabelPos = labels.reduce((pos,l,i) => {
         if (l.attrs.roleLabel != null) pos.push(i)
@@ -501,9 +501,11 @@ export class Relation extends dia.Element {
         let value = display ? null : 'none'
         link.label(i, {attrs: {roleLabel: {display: value}}})
       })
-    }
+    }*/
     let links = this.graph.getConnectedLinks(this)
-    links.forEach((l) => {toggleLink(l,bool)})
+    //links.forEach((l) => {toggleLink(l,bool)})
+    //links.forEach((l) => l.attr('showRole',bool))
+    links.forEach((l) => l.setShowRole(bool))
   }
 }
 export class RelationView extends dia.ElementView {
@@ -538,3 +540,164 @@ export class RelationView extends dia.ElementView {
     }
   }
 }
+
+// ATTRIBUTE LINKS
+export class AttributeLink extends dia.Link {
+  preinitialize() {
+    this.markup = shapes.standard.Link.prototype.markup
+  }
+  defaults() {
+    const clipId = util.uuid();
+
+    return {
+      ...super.defaults,
+      type: 'erd.AttributeLink',
+      attrs: {
+        line: {
+          connection: true,
+          stroke: 'black',
+          strokeWidth: 2,
+          strokeLinejoin: 'round',
+          targetMarker: 'none'
+        },
+        wrapper: {
+          connection: true,
+          strokeWidth: 10,
+          strokeLinejoin: 'round'
+        }
+      }
+    }
+  }
+}
+
+
+// RELATIONSHIP LINKS
+export class RelationshipLink extends dia.Link {
+  preinitialize() {
+    this.markup = shapes.standard.Link.prototype.markup
+  }
+  addCardinalityLabel() {
+    console.log('add cardinality label')
+    const labelMarkup = util.svg/* xml */`
+  <foreignObject @selector="linkCardLabel" data-linkId="${this.id}">
+    <div @selector="content" xmlns="http://www.w3.org/1999/xhtml" class="linkCardLabelContainer">
+      <label @selector="linkLabelOpeningBrackets">(</label>
+      <label @selector="linkLabelMinCard" class="linkLabelInput linkCardInput minCard" contenteditable="true" style="text-transform:uppercase" data-placeholder="X" autocomplete="off" autocorrect="off" spellcheck="false">${this.attr('minCard')}</label>
+      <label @selector="linkLabelOpeningComa">,</label>
+      <label @selector="linkLabelMaxCard" class="linkLabelInput linkCardInput maxCard" contenteditable="true" style="text-transform:uppercase" data-placeholder="X" autocomplete="off" autocorrect="off" spellcheck="false">${this.attr('maxCard')}</label>
+      <label @selector="linkLabelClosingBrackets">)</label>
+    </div>
+  </foreignObject>`
+    this.appendLabel({
+      markup: labelMarkup,
+      attrs: {
+        linkCardLabel: {
+          width: '6ch',
+          height: 30,
+          cursor: 'default'
+        },
+        labelType: 'cardinality'
+      },
+      position: {
+        distance: 0.3,
+        offset: 40
+      }
+    })
+  }
+  addRoleLabel() {
+    console.log('add role label')
+    const roleLabelMarkup = util.svg/* xml */`
+  <foreignObject @selector="roleLabel" data-linkId="${this.id}">
+    <div @selector="content" xmlns="http://www.w3.org/1999/xhtml" class="linkRoleLabelContainer">
+      <div @selector="linkRoleLabel" class="linkLabelInput linkRoleInput" contenteditable="true" style="text-transform:lowercase" data-placeholder="rol" autocomplete="off" autocorrect="off" spellcheck="false">${this.attr('role')}</div>
+    </div>
+  </foreignObject>`
+    this.appendLabel({
+      markup: roleLabelMarkup,
+      initialSize: {
+        width: '5ch',
+        height: 30
+      },
+      attrs: {
+        roleLabel: {
+          width: '5ch',
+          height: 30,
+          cursor: 'default'
+        },
+        labelType: 'role'
+      },
+      position: {
+        distance: 0.6,
+        offset: 30,
+        args: {
+          keepGradient: true,
+          ensureLegibility: true
+        }
+      }
+    })
+  }
+  setShowRole(bool) {
+    if(!bool && this.labels().length == 2) this.removeLabel(1)
+    else this.addRoleLabel()
+  }
+  initialize() {
+    console.log('initialize')
+    dia.Link.prototype.initialize.apply(this, arguments);
+    this.addCardinalityLabel()
+    if(this.attr('showRoles')) this.addRoleLabel()
+  }
+  defaults() {
+    const clipId = util.uuid();
+
+    return {
+      ...super.defaults,
+      type: 'erd.RelationshipLink',
+      attrs: {
+        line: {
+          connection: true,
+          stroke: 'black',
+          strokeWidth: 2,
+          strokeLinejoin: 'round',
+          targetMarker: 'none'
+        },
+        wrapper: {
+          connection: true,
+          strokeWidth: 10,
+          strokeLinejoin: 'round'
+        },
+        showRoles: false,
+        minCard: '',
+        maxCard: '',
+        role: ''
+      }
+    }
+  }
+}
+/*
+export class RelationshipLinkView extends dia.LinkView {
+  render() {
+    dia.LinkView.prototype.render.apply(this, arguments)
+    let disp = this.model.attr('showRoles') ? 'default' : 'none'
+    let labels = this.model.labels()
+    console.log('lets render labels')
+    console.log(labels)
+    console.log(disp)
+    this.model.labels(labels.map((l) => {
+      if (l.attrs.roleLabel == null) return l
+      l.attrs.roleLabel.display = disp
+      return l
+    }))
+    console.log(this.model.labels())
+    return this
+  }
+  initialize() {
+    dia.LinkView.prototype.initialize.apply(this, arguments)
+
+    this.listenTo(this.model, 'change', (model, options) => {
+      console.log('change')
+      console.log(options)
+      this.render()
+    })
+  }
+}
+*/
