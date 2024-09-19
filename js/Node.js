@@ -1,4 +1,4 @@
-import { dia, shapes, util, elementTools, linkTools, mvc } from '../node_modules/@joint/core/joint.mjs';
+import { dia, shapes, util, elementTools, linkTools, mvc } from './@joint/core/joint.mjs';
 
 
 const showSettings = (element) => {

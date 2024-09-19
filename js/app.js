@@ -1,4 +1,4 @@
-import {util, dia, shapes, elementTools, linkTools } from '../node_modules/@joint/core/joint.mjs';
+import {util, dia, shapes, elementTools, linkTools } from './@joint/core/joint.mjs';
 import {
   Entity,
   Attribute,
