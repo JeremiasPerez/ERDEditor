@@ -417,7 +417,6 @@ export class AttributeView extends dia.ElementView {
     // is (partial) key
     if(this.model.prop('isKey')) {
       this.el.querySelector('.elementNameInput').style.textDecorationLine = 'underline'
-      this.model.attr('attributeName/style/textDecorationLine', 'underline')
     } else if(this.model.prop('isPartialKey')) { // is partial key
       this.el.querySelector('.elementNameInput').style.textDecorationLine = 'underline'
       this.el.querySelector('.elementNameInput').style.textDecorationStyle = 'dotted'
