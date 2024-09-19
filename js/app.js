@@ -1,4 +1,11 @@
-import {util, dia, shapes, elementTools, linkTools } from './@joint/core/joint.mjs';
+//import {util, dia, shapes, elementTools, linkTools } from '../node_modules/@joint/core/joint.mjs';
+const dia = joint.dia
+const shapes = joint.shapes
+const util = joint.util
+const elementTools = joint.elementTools
+const linkTools = joint.linkTools
+
+
 import {
   Entity,
   Attribute,
