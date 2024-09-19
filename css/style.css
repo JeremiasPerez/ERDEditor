@@ -372,10 +372,6 @@ input:checked + .slider::before {
   padding-right: 3ch;
 }
 
-#paper{
-  border: solid 1px black;
-}
-
 .linkCardLabelContainer{
   display:flex;
   justify-content: center;
@@ -446,4 +442,11 @@ body{
 }
 .draggableElement:hover{
   fill: #e6f2ff;
+}
+#paperCont{
+  border: solid 1px black;
+  resize: both;
+  background: white;
+  box-sizing: border-box;
+  overflow: hidden;
 }

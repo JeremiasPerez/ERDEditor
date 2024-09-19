@@ -22,6 +22,9 @@ import {
 } from './Node.js';
 
 
+const default_width = 1000
+const default_height = 600
+
 const namespace = {
   ...shapes,
   erd: {
@@ -40,8 +43,8 @@ const graph = new dia.Graph({linking: false}, { cellNamespace: namespace });
 const paper = new dia.Paper({
   el: document.getElementById('paper'),
   model: graph,
-  width: 1000,
-  height: 600,
+  width: default_width,
+  height: default_height,
   background: { color: 'white' },
   cellViewNamespace: namespace,
   guard: (e) => e.target.getAttribute('contenteditable') != null,
@@ -301,7 +304,6 @@ graph.on('add', (model, collection, options) => {
   addTools(model)
 })
 
-
 // BOTONES
 document.querySelector('#download').addEventListener('click',(e) => {
   let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(graph.toJSON()))
@@ -321,12 +323,36 @@ document.querySelector('#file-input').addEventListener('change',(ev) => {
   const reader = new FileReader()
   reader.addEventListener("load", (e) => {
     graph.fromJSON(JSON.parse(reader.result))
+    let cont = document.querySelector('#paperCont')
     let cells = graph.getCells()
     cells.forEach((c) => addTools(c))
+
+    // Redimensionar contenedor
+    let dim = cells.reduce((m, c) => {
+      let view = paper.findViewByModel(c)
+      if(view == null) return m
+      let bbox = view.getBBox()
+      if(bbox.x + bbox.width > m.w) m.w = bbox.x + bbox.width
+      if(bbox.y + bbox.height > m.h) m.h = bbox.y + bbox.height
+      return m
+    },{w: default_width, h: default_height})
+    cont.style.width = (dim.w+20)+'px'
+    cont.style.height = (dim.h+20)+'px'
   })
   reader.readAsText(ev.currentTarget.files[0]);
-
 })
+
+
+let paperCont = document.querySelector('#paperCont')
+
+const resizeObserver = new ResizeObserver((entries) => {
+  if(paperCont.dataset.init == null){
+    paperCont.dataset.init = 'true'
+    return
+  }
+  paper.setDimensions(paperCont.offsetWidth, paperCont.offsetHeight)
+});
+resizeObserver.observe(paperCont);
 
 
 /*document.querySelector('#exportAsPng').addEventListener('click',async (e) => {
