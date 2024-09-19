@@ -18,7 +18,9 @@ import {
   EntityView,
   AttributeLink,
   RelationshipLink,
-  RelationshipLinkView
+  RelationshipLinkView,
+  InheritanceLink,
+  InheritanceLinkView
 } from './Node.js';
 
 
@@ -36,7 +38,9 @@ const namespace = {
     EntityView,
     AttributeLink,
     RelationshipLink,
-    RelationshipLinkView
+    RelationshipLinkView,
+    InheritanceLink,
+    InheritanceLinkView
   }
 };
 const graph = new dia.Graph({linking: false}, { cellNamespace: namespace });
@@ -120,7 +124,7 @@ const validateConnection = (source, target) => {
   let targetType = target.model.get('type')
   // valid connections: attribute - entity, attribute - relation, attribute - attribute, relation - entity
   let validCons = [
-    ['erd.Entity','erd.Attribute'],['erd.Relation','erd.Attribute'],['erd.Attribute','erd.Attribute'],['erd.Relation','erd.Entity']
+    ['erd.Entity','erd.Attribute'],['erd.Relation','erd.Attribute'],['erd.Attribute','erd.Attribute'],['erd.Relation','erd.Entity'],['erd.Entity','erd.Entity']
   ]
   let con = validCons.find(((el) => (el[0] == sourceType && el[1] == targetType) || (el[1] == sourceType && el[0] == targetType)))
 
@@ -198,19 +202,26 @@ const manageConnection = (target) => {
   const source = paper.findView(document.querySelector('#'+sourceId))
   const con = validateConnection(source, target)
   if (con == null) return
-
   let link
   if (con.includes('erd.Entity') && con.includes('erd.Relation')){
+    let relation = source.model.get('type') == 'erd.Relation' ? source : target
     link = new RelationshipLink({
       source: source.model,
       target: target.model,
-      showRoles: source.model.prop('showRoles')
+      showRoles: relation.model.prop('showRoles')
     })
     link.addCardinalityLabel()
     link.addRoleLabel()
   }
-  else{
+  else if(con.includes('erd.Attribute')){
     link = new AttributeLink({
+      source: source.model,
+      target: target.model
+    })
+  } else {
+    console.log('inheritance link')
+    // todo create inheritance link
+    link = new InheritanceLink({
       source: source.model,
       target: target.model
     })
@@ -282,7 +293,8 @@ const addTools = (model) => {
       break
     case 'erd.Entity':
       tools = [new elementTools.Remove({scale: 1.5,y: '50%'}),
-        new SettingsButton()]
+        new SettingsButton(),
+        new LinkButton()]
       break
     case 'erd.Attribute':
       tools = [new elementTools.Remove({scale: 1.5,y: '50%'}),

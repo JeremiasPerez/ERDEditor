@@ -732,3 +732,82 @@ export class RelationshipLinkView extends dia.LinkView {
   }
 }
 
+// INHERITANCE LINKS
+const inheritanceLinkMarkup = util.svg/* xml */`
+  <path @selector="wraper" fill="none" stroke="transparent" cursor="pointer"/>
+  <path @selector="line" fill="none" pointer-events="none"/>
+  <path @selector="semicircle" class="semicircle" fill="none" cursor="pointer"/>
+`
+export class InheritanceLink extends dia.Link {
+  preinitialize() {
+    this.markup = inheritanceLinkMarkup
+  }
+  defaults() {
+    const clipId = util.uuid();
+    const w = 30
+    const h = 30
+    return {
+      ...super.defaults,
+      type: 'erd.InheritanceLink',
+      dimX: w,
+      dimY: h,
+      attrs: {
+        line: {
+          connection: true,
+          stroke: 'black',
+          strokeWidth: 2,
+          strokeLinejoin: 'round',
+          targetMarker: 'none'
+        },
+        wrapper: {
+          connection: true,
+          strokeWidth: 10,
+          strokeLinejoin: 'round'
+        },
+        semicircle: {
+          stroke: 'black',
+          strokeWidth: 2,
+          d: `M 0 0 C 0 ${h}, ${w} ${h}, ${w} 0`,
+          style: {
+            transformOrigin: `${w/2}px ${h/2}px`
+          }
+        }
+      }
+    }
+  }
+}
+export class InheritanceLinkView extends dia.LinkView {
+  render() {
+    dia.LinkView.prototype.render.apply(this, arguments)
+    let point = this.getPointAtRatio(0.5)
+    let tgt = this.getTangentAtRatio(0.5)
+    let angle = Math.atan((tgt.end.y-tgt.start.y)/(tgt.end.x-tgt.start.x))
+    let deg = angle*180/Math.PI
+    this.el.querySelector('.semicircle').style.transform = `translate(${point.x-this.model.prop('dimX')/2}px, ${point.y-this.model.prop('dimY')/2}px) rotate(${-90+deg}deg)`
+    return this
+  }
+  initialize() {
+    dia.LinkView.prototype.initialize.apply(this, arguments)
+    this.listenTo(this.model, 'change', (model, options) => {
+      this.render()
+    })
+    this.model.prop('source').on('change:position',() => {this.render()})
+    this.model.prop('target').on('change:position',() => {this.render()})
+  }
+  manageSemicircleClick(e) {
+    let t = this.el.querySelector('.semicircle').style.transform
+    if(t == null || !t.includes('rotate(180deg)')){
+      if(t != null){
+        this.el.querySelector('.semicircle').style.transform = t+' rotate(180deg)'
+      }
+    }
+    else {
+      this.el.querySelector('.semicircle').style.transform = t.replace('rotate(180deg)','')
+    }
+  }
+  events() {
+    return {
+      'click .semicircle': (e) => {this.manageSemicircleClick(e)}
+    }
+  }
+}
