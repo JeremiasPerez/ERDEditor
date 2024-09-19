@@ -11,6 +11,7 @@ import {
   EntityView,
   AttributeLink,
   RelationshipLink,
+  RelationshipLinkView
 } from './Node.js';
 
 
@@ -24,7 +25,8 @@ const namespace = {
     AttributeView,
     EntityView,
     AttributeLink,
-    RelationshipLink
+    RelationshipLink,
+    RelationshipLinkView
   }
 };
 const graph = new dia.Graph({linking: false}, { cellNamespace: namespace });
@@ -192,10 +194,10 @@ const manageConnection = (target) => {
     link = new RelationshipLink({
       source: source.model,
       target: target.model,
-      attrs: {
-        showRoles: source.model.attr('showRoles')
-      }
+      showRoles: source.model.prop('showRoles')
     })
+    link.addCardinalityLabel()
+    link.addRoleLabel()
   }
   else{
     link = new AttributeLink({
@@ -221,54 +223,6 @@ paper.on('blank:pointerup', (evt, x, y) => {
   let link = document.querySelector('[model-id=connectionLink]')
   let linkEl = paper.findView(link)
   linkEl.model.attr('line/display','none')
-})
-
-
-document.addEventListener('input',(e) => {
-  if(!e.target.classList.contains('linkLabelInput')) return
-  if(e.target.innerText.trim() == ''){
-    while (e.target.firstChild) e.target.removeChild(e.target.firstChild)
-  }
-  let label = e.target.closest('.label')
-  let link = paper.findView(e.target.closest('.joint-link'))
-  if(e.target.classList.contains('linkCardInput')){
-    let content = e.target.innerText.trim()
-    const card = Number(content)
-    if(content != 'N' && content != 'n' && (Number.isNaN(card) || card < 0 || !Number.isInteger(card))) e.target.innerText = ''
-    if(e.target.classList.contains('minCard')) link.model.attr('minCard',e.target.innerText)
-    else if(e.target.classList.contains('maxCard')) link.model.attr('maxCard',e.target.innerText)
-  } else if(e.target.classList.contains('linkRoleInput')){
-    let labels = link.model.labels()
-    let rolLabelPos = labels.findIndex((l) => l.id == label.id)
-    if(e.target.innerText.trim()=='') link.model.label(rolLabelPos, {attrs: {roleLabel: {width: '5ch'}}})
-    else link.model.label(rolLabelPos, {attrs: {roleLabel: {width: e.target.offsetWidth}}})
-    link.model.attr('role',e.target.innerText.trim())
-  }
-  console.log(link.model)
-  //let link = paper.findView(document.querySelector('#'+foreign.dataset.linkId))
-  /*if ('placeholder' in e.target.dataset && e.target.innerText.trim() == ''){
-    while (e.target.firstChild) e.target.removeChild(e.target.firstChild)
-    let containerEl = paper.findView(e.target.closest('.joint-element'))
-    containerEl.model.prop('size/width',containerEl.model.get('initialSize').width)
-  }
-  else if (e.target.classList.contains('elementNameInput')){
-    let containerEl = paper.findView(e.target.closest('.joint-element'))
-    containerEl.model.attr('label',e.target.innerText.trim())
-    containerEl.model.prop('size/width',e.target.offsetWidth)
-  }
-  else if (e.target.classList.contains('linkCardInput')){
-    let content = e.target.innerText.trim()
-    const card = Number(content)
-    if(content != 'N' && content != 'n' && (Number.isNaN(card) || card < 0 || !Number.isInteger(card))) e.target.innerText = ''
-  }
-  else if (e.target.classList.contains('linkRoleInput')){
-    // todo - resize label box
-    let label = e.target.closest('.label')
-    let link = paper.findView(e.target.closest('.joint-link'))
-    let labels = link.model.labels()
-    let rolLabelPos = labels.findIndex((l) => l.id == label.id)
-    link.model.label(rolLabelPos, {attrs: {roleLabel: {width: e.target.offsetWidth}}})
-  }*/
 })
 
 // VENTANA OPCIONES

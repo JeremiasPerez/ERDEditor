@@ -12,23 +12,45 @@ const showSettings = (element) => {
   switch (element.model.attributes['type']){
     case 'erd.Entity':
       settingsCont = document.querySelector('#entitySettingsContent').content.cloneNode(true);
-      settingsCont.querySelector("#isWeakInput").checked = element.model.attr('isWeak')
-      settingsCont.querySelector("#isWeakInput").addEventListener('change', (e) => {element.model.attr('isWeak',e.currentTarget.checked)})
+      settingsCont.querySelector("#isWeakInput").checked = element.model.prop('isWeak')
+      settingsCont.querySelector("#isWeakInput").addEventListener('change', (e) => {element.model.prop('isWeak',e.currentTarget.checked)})
       break
     case 'erd.Attribute':
       settingsCont = document.querySelector('#attributeSettingsContent').content.cloneNode(true);
-      settingsCont.querySelector("#isKeyInput").checked = element.model.attr('isKey')
-      settingsCont.querySelector("#isKeyInput").addEventListener('change', (e) => {element.model.attr('isKey',e.currentTarget.checked)})
-      settingsCont.querySelector("#isMultivaluatedInput").checked = element.model.attr('isMultivaluated')
-      settingsCont.querySelector("#isMultivaluatedInput").addEventListener('change', (e) => {element.model.attr('isMultivaluated',e.currentTarget.checked)})
-      settingsCont.querySelector("#isDerivatedInput").checked = element.model.attr('isDerivated')
-      settingsCont.querySelector("#isDerivatedInput").addEventListener('change', (e) => {element.model.attr('isDerivated',e.currentTarget.checked)})
+      settingsCont.querySelector("#isKeyInput").checked = element.model.prop('isKey')
+      settingsCont.querySelector("#isKeyInput").addEventListener('change', (e) => {
+        element.model.prop('isKey',e.currentTarget.checked)
+        if(e.currentTarget.checked){
+          document.querySelector("#isPartialKeyInput").disabled = true
+          document.querySelector("#isPartialKeyInput").closest('.settings-element').classList.add('disabled')
+        }
+        else {
+          document.querySelector("#isPartialKeyInput").closest('.settings-element').classList.remove('disabled')
+          document.querySelector("#isPartialKeyInput").disabled = false
+        }
+      })
+      settingsCont.querySelector("#isPartialKeyInput").checked = element.model.prop('isPartialKey')
+      settingsCont.querySelector("#isPartialKeyInput").addEventListener('change', (e) => {
+        element.model.prop('isPartialKey',e.currentTarget.checked)
+        if(e.currentTarget.checked){
+          document.querySelector("#isKeyInput").closest('.settings-element').classList.add('disabled')
+          document.querySelector("#isKeyInput").disabled = true
+        }
+        else {
+          document.querySelector("#isKeyInput").closest('.settings-element').classList.remove('disabled')
+          document.querySelector("#isKeyInput").disabled = false
+        }
+      })
+      settingsCont.querySelector("#isMultivaluatedInput").checked = element.model.prop('isMultivaluated')
+      settingsCont.querySelector("#isMultivaluatedInput").addEventListener('change', (e) => {element.model.prop('isMultivaluated',e.currentTarget.checked)})
+      settingsCont.querySelector("#isDerivatedInput").checked = element.model.prop('isDerivated')
+      settingsCont.querySelector("#isDerivatedInput").addEventListener('change', (e) => {element.model.prop('isDerivated',e.currentTarget.checked)})
       break
     case 'erd.Relation':
       settingsCont = document.querySelector('#relationSettingsContent').content.cloneNode(true);
-      settingsCont.querySelector("#isIndentifierInput").checked = element.model.attr('isIdentifier')
-      settingsCont.querySelector("#isIndentifierInput").addEventListener('change', (e) => {element.model.attr('isIdentifier',e.currentTarget.checked)})
-      settingsCont.querySelector('#showRoleInput').checked = element.model.attr('showRoles')
+      settingsCont.querySelector("#isIndentifierInput").checked = element.model.prop('isIdentifier')
+      settingsCont.querySelector("#isIndentifierInput").addEventListener('change', (e) => {element.model.prop('isIdentifier',e.currentTarget.checked)})
+      settingsCont.querySelector('#showRoleInput').checked = element.model.prop('showRoles')
       settingsCont.querySelector('#showRoleInput').addEventListener('change', (e) => {element.model.setShowRoles(e.currentTarget.checked)})
       break
   }
@@ -209,7 +231,13 @@ export class Entity extends dia.Element {
   preinitialize() {
     this.markup = entityMarkup;
   }
-
+  initialize() {
+    dia.Element.prototype.initialize.apply(this, arguments)
+    let label = this.prop('labelText')
+    if(label != null && typeof label === 'object'){
+      this.prop('labelText',Object.values(label).join(''))
+    }
+  }
   defaults() {
     const clipId = util.uuid();
 
@@ -224,6 +252,8 @@ export class Entity extends dia.Element {
         width: 150,
         height: 50,
       },
+      isWeak: false,
+      labelText: '',
       attrs: {
         root: {
           cursor: 'move'
@@ -252,9 +282,7 @@ export class Entity extends dia.Element {
           height: 'calc(h - 10)',
           x: 5,
           y: 5
-        },
-        isWeak: false,
-        labelText: ''
+        }
       }
     }
   }
@@ -263,9 +291,9 @@ export class EntityView extends dia.ElementView {
   render() {
     dia.ElementView.prototype.render.apply(this, arguments);
     // label
-    this.el.querySelector('.elementNameInput').innerText = this.model.attr('labelText')
+    this.el.querySelector('.elementNameInput').innerText = this.model.prop('labelText')
     // is weak
-    if(this.model.attr('isWeak')) this.model.attr('innerEntityBody/display',null)
+    if(this.model.prop('isWeak')) this.model.attr('innerEntityBody/display',null)
     else this.model.attr('innerEntityBody/display', 'none')
 
     return this
@@ -273,12 +301,12 @@ export class EntityView extends dia.ElementView {
   initialize() {
     dia.ElementView.prototype.initialize.apply(this, arguments);
     this.listenTo(this.model, 'change', (model, options) => {
-      if(options.propertyPath == 'size/width' || options.propertyPath == 'attrs/labelText') return // avoid re-render as it would lose focus
+      if(options.propertyPath == 'size/width' || options.propertyPath == 'labelText') return // avoid re-render as it would lose focus
       this.render()
     })
   }
   manageInput(e) {
-    this.model.attr('labelText',e.currentTarget.innerText.trim())
+    this.model.prop('labelText',e.currentTarget.innerText.trim())
     if(e.currentTarget.innerText.trim() == ''){
       while (e.currentTarget.firstChild) e.currentTarget.removeChild(e.currentTarget.firstChild)
       this.model.prop('size/width',this.model.get('initialSize').width)
@@ -308,9 +336,9 @@ export class Attribute extends dia.Element {
   }
   initialize() {
     dia.Element.prototype.initialize.apply(this, arguments)
-    let label = this.attr('labelText')
+    let label = this.prop('labelText')
     if(label != null && typeof label === 'object'){
-      this.attr('labelText',Object.values(label).join(''))
+      this.prop('labelText',Object.values(label).join(''))
     }
   }
 
@@ -328,6 +356,11 @@ export class Attribute extends dia.Element {
         width: 150,
         height: 50,
       },
+      isMultivaluated: false,
+      isDerivated: false,
+      isKey: false,
+      isPartialKey: false,
+      labelText: '',
       attrs: {
         root: {
           cursor: 'move'
@@ -365,12 +398,7 @@ export class Attribute extends dia.Element {
           style:{
             textDecorationThickness: '2px'
           }
-        },
-        isMultivaluated: false,
-        isDerivated: false,
-        isKey: false,
-        isPartialKey: false,
-        labelText: ''
+        }
       }
     }
   }
@@ -379,36 +407,35 @@ export class AttributeView extends dia.ElementView {
   render() {
     dia.ElementView.prototype.render.apply(this, arguments)
     // label
-    this.el.querySelector('.elementNameInput').innerText = this.model.attr('labelText')
+    this.el.querySelector('.elementNameInput').innerText = this.model.prop('labelText')
     // is multivaluated attribute
-    if(this.model.attr('isMultivaluated')) this.model.attr('innerAttributeBody/display',null)
+    if(this.model.prop('isMultivaluated')) this.model.attr('innerAttributeBody/display',null)
     else this.model.attr('innerAttributeBody/display', 'none')
     // is derivated
-    if(this.model.attr('isDerivated')) this.model.attr('attributeBody/strokeDasharray','5,5')
+    if(this.model.prop('isDerivated')) this.model.attr('attributeBody/strokeDasharray','5,5')
     else this.model.attr('attributeBody/strokeDasharray', null)
-    // is key
-    if(this.model.attr('isKey')) this.el.querySelector('.elementNameInput').style.textDecorationLine = 'underline'
-    else this.el.querySelector('.elementNameInput').style.textDecorationLine = null
-    // is partial key
-    if(this.model.attr('isPartialKey')) {
+    // is (partial) key
+    if(this.model.prop('isKey')) {
       this.el.querySelector('.elementNameInput').style.textDecorationLine = 'underline'
-      this.el.querySelector('.elementNameInput').style.textDecorationThickness = 'dashed'
-    }
-    else{
+      this.model.attr('attributeName/style/textDecorationLine', 'underline')
+    } else if(this.model.prop('isPartialKey')) { // is partial key
+      this.el.querySelector('.elementNameInput').style.textDecorationLine = 'underline'
+      this.el.querySelector('.elementNameInput').style.textDecorationStyle = 'dotted'
+    } else { // not key
       this.el.querySelector('.elementNameInput').style.textDecorationLine = null
-      this.el.querySelector('.elementNameInput').style.textDecorationThickness = null
+      this.el.querySelector('.elementNameInput').style.textDecorationStyle = null
     }
     return this
   }
   initialize() {
     dia.ElementView.prototype.initialize.apply(this, arguments);
     this.listenTo(this.model, 'change', (model, options) => {
-      if(options.propertyPath == 'size/width' || options.propertyPath == 'attrs/labelText') return // avoid re-render as it would lose focus
+      if(options.propertyPath == 'size/width' || options.propertyPath == 'labelText' ) return // avoid re-render as it would lose focus
       this.render()
     })
   }
   manageInput(e) {
-    this.model.attr('labelText',e.currentTarget.innerText.trim())
+    this.model.prop('labelText',e.currentTarget.innerText.trim())
     if(e.currentTarget.innerText.trim() == ''){
       while (e.currentTarget.firstChild) e.currentTarget.removeChild(e.currentTarget.firstChild)
       this.model.prop('size/width',this.model.get('initialSize').width)
@@ -438,8 +465,8 @@ export class Relation extends dia.Element {
   }
   initialize() {
     dia.Element.prototype.initialize.apply(this, arguments)
-    let label = this.attr('labelText')
-    if(label != null && typeof label === 'object') this.attr('labelText',Object.values(label).join(''))
+    let label = this.prop('labelText')
+    if(label != null && typeof label === 'object') this.prop('labelText',Object.values(label).join(''))
   }
   defaults() {
     const clipId = util.uuid();
@@ -451,6 +478,9 @@ export class Relation extends dia.Element {
         width: 150,
         height: 50
       },
+      isIdentifier: false,
+      showRoles: false,
+      labelText: '',
       initialSize: {
         width: 150,
         height: 50,
@@ -481,52 +511,36 @@ export class Relation extends dia.Element {
           height: 'calc(h - 10)',
           x: 5,
           y: 5
-        },
-        isIdentifier: false,
-        showRoles: false,
-        labelText: ''
+        }
       }
     }
   }
 
   setShowRoles(bool) {
-    this.attr('showRoles',bool)
-    /*let toggleLink = (link, display) => {
-      let labels = link.labels()
-      let rolLabelPos = labels.reduce((pos,l,i) => {
-        if (l.attrs.roleLabel != null) pos.push(i)
-        return pos
-      },[])
-      rolLabelPos.forEach((i) => {
-        let value = display ? null : 'none'
-        link.label(i, {attrs: {roleLabel: {display: value}}})
-      })
-    }*/
+    this.prop('showRoles',bool)
     let links = this.graph.getConnectedLinks(this)
-    //links.forEach((l) => {toggleLink(l,bool)})
-    //links.forEach((l) => l.attr('showRole',bool))
-    links.forEach((l) => l.setShowRole(bool))
+    links.forEach((l) => l.prop('showRoles',bool))
   }
 }
 export class RelationView extends dia.ElementView {
   render() {
     dia.ElementView.prototype.render.apply(this, arguments);
     // label
-    this.el.querySelector('.elementNameInput').innerText = this.model.attr('labelText')
+    this.el.querySelector('.elementNameInput').innerText = this.model.prop('labelText')
     // identifier relationship
-    if(this.model.attr('isIdentifier')) this.model.attr('innerRelationBody/display',null)
+    if(this.model.prop('isIdentifier')) this.model.attr('innerRelationBody/display',null)
     else this.model.attr('innerRelationBody/display', 'none')
     return this
   }
   initialize() {
-    dia.ElementView.prototype.initialize.apply(this, arguments);
+    dia.ElementView.prototype.initialize.apply(this, arguments)
     this.listenTo(this.model, 'change', (model, options) => {
-      if(options.propertyPath == 'size/width' || options.propertyPath == 'attrs/labelText') return // avoid re-render as it would lose focus
+      if(options.propertyPath == 'size/width' || options.propertyPath == 'labelText') return // avoid re-render as it would lose focus
       this.render()
     })
   }
   manageInput(e) {
-    this.model.attr('labelText',e.currentTarget.innerText.trim())
+    this.model.prop('labelText',e.currentTarget.innerText.trim())
     if(e.currentTarget.innerText.trim() == ''){
       while (e.currentTarget.firstChild) e.currentTarget.removeChild(e.currentTarget.firstChild)
       this.model.prop('size/width',this.model.get('initialSize').width)
@@ -577,14 +591,13 @@ export class RelationshipLink extends dia.Link {
     this.markup = shapes.standard.Link.prototype.markup
   }
   addCardinalityLabel() {
-    console.log('add cardinality label')
     const labelMarkup = util.svg/* xml */`
   <foreignObject @selector="linkCardLabel" data-linkId="${this.id}">
     <div @selector="content" xmlns="http://www.w3.org/1999/xhtml" class="linkCardLabelContainer">
       <label @selector="linkLabelOpeningBrackets">(</label>
-      <label @selector="linkLabelMinCard" class="linkLabelInput linkCardInput minCard" contenteditable="true" style="text-transform:uppercase" data-placeholder="X" autocomplete="off" autocorrect="off" spellcheck="false">${this.attr('minCard')}</label>
+      <label @selector="linkLabelMinCard" class="linkLabelInput linkCardInput minCard" contenteditable="true" style="text-transform:uppercase" data-placeholder="X" autocomplete="off" autocorrect="off" spellcheck="false">${this.prop('minCard')}</label>
       <label @selector="linkLabelOpeningComa">,</label>
-      <label @selector="linkLabelMaxCard" class="linkLabelInput linkCardInput maxCard" contenteditable="true" style="text-transform:uppercase" data-placeholder="X" autocomplete="off" autocorrect="off" spellcheck="false">${this.attr('maxCard')}</label>
+      <label @selector="linkLabelMaxCard" class="linkLabelInput linkCardInput maxCard" contenteditable="true" style="text-transform:uppercase" data-placeholder="X" autocomplete="off" autocorrect="off" spellcheck="false">${this.prop('maxCard')}</label>
       <label @selector="linkLabelClosingBrackets">)</label>
     </div>
   </foreignObject>`
@@ -605,11 +618,10 @@ export class RelationshipLink extends dia.Link {
     })
   }
   addRoleLabel() {
-    console.log('add role label')
     const roleLabelMarkup = util.svg/* xml */`
   <foreignObject @selector="roleLabel" data-linkId="${this.id}">
     <div @selector="content" xmlns="http://www.w3.org/1999/xhtml" class="linkRoleLabelContainer">
-      <div @selector="linkRoleLabel" class="linkLabelInput linkRoleInput" contenteditable="true" style="text-transform:lowercase" data-placeholder="rol" autocomplete="off" autocorrect="off" spellcheck="false">${this.attr('role')}</div>
+      <div @selector="linkRoleLabel" class="linkLabelInput linkRoleInput" contenteditable="true" style="text-transform:lowercase" data-placeholder="rol" autocomplete="off" autocorrect="off" spellcheck="false">${this.prop('role')}</div>
     </div>
   </foreignObject>`
     this.appendLabel({
@@ -636,15 +648,14 @@ export class RelationshipLink extends dia.Link {
       }
     })
   }
-  setShowRole(bool) {
-    if(!bool && this.labels().length == 2) this.removeLabel(1)
-    else this.addRoleLabel()
-  }
   initialize() {
-    console.log('initialize')
     dia.Link.prototype.initialize.apply(this, arguments);
-    this.addCardinalityLabel()
-    if(this.attr('showRoles')) this.addRoleLabel()
+    let minCard = this.prop('minCard')
+    if(minCard != null && typeof minCard === 'object') this.prop('minCard',Object.values(minCard).join(''))
+    let maxCard = this.prop('maxCard')
+    if(maxCard != null && typeof maxCard === 'object') this.prop('maxCard',Object.values(maxCard).join(''))
+    let role = this.prop('role')
+    if(role != null && typeof role === 'object') this.prop('role',Object.values(role).join(''))
   }
   defaults() {
     const clipId = util.uuid();
@@ -652,6 +663,10 @@ export class RelationshipLink extends dia.Link {
     return {
       ...super.defaults,
       type: 'erd.RelationshipLink',
+      showRoles: false,
+      minCard: '',
+      maxCard: '',
+      role: '',
       attrs: {
         line: {
           connection: true,
@@ -664,40 +679,52 @@ export class RelationshipLink extends dia.Link {
           connection: true,
           strokeWidth: 10,
           strokeLinejoin: 'round'
-        },
-        showRoles: false,
-        minCard: '',
-        maxCard: '',
-        role: ''
+        }
       }
     }
   }
 }
-/*
 export class RelationshipLinkView extends dia.LinkView {
   render() {
     dia.LinkView.prototype.render.apply(this, arguments)
-    let disp = this.model.attr('showRoles') ? 'default' : 'none'
-    let labels = this.model.labels()
-    console.log('lets render labels')
-    console.log(labels)
-    console.log(disp)
-    this.model.labels(labels.map((l) => {
-      if (l.attrs.roleLabel == null) return l
-      l.attrs.roleLabel.display = disp
-      return l
-    }))
-    console.log(this.model.labels())
+    this.el.querySelector('.label .minCard').innerText = this.model.prop('minCard')
+    this.el.querySelector('.label .maxCard').innerText = this.model.prop('maxCard')
+    this.el.querySelector('.label .linkRoleInput').innerText = this.model.prop('role')
+    if(!this.model.prop('showRoles')) this.el.querySelector('.linkRoleInput').closest('.label').style.display = 'none'
+    else this.el.querySelector('.linkRoleInput').closest('.label').style.display = 'default'
+    // todo assign initial width for import
     return this
   }
   initialize() {
     dia.LinkView.prototype.initialize.apply(this, arguments)
 
     this.listenTo(this.model, 'change', (model, options) => {
-      console.log('change')
-      console.log(options)
-      this.render()
+      let avoid = ['minCard','maxCard','role']
+      if(!avoid.includes(options.propertyPath) && !options.propertyPath.includes('labels/')) this.render()
     })
   }
+  manageCardInput(e) {
+    let content = e.currentTarget.innerText.trim()
+    const card = Number(content)
+    if(content == '' || (content != 'N' && content != 'n' && (Number.isNaN(card) || card < 0 || !Number.isInteger(card)))){
+      while (e.currentTarget.firstChild) e.currentTarget.removeChild(e.target.firstChild)
+    }
+    if(e.currentTarget.classList.contains('minCard')) this.model.prop('minCard',e.currentTarget.innerText)
+    else if(e.target.classList.contains('maxCard')) this.model.prop('maxCard',e.currentTarget.innerText)
+  }
+  manageRoleInput(e) {
+    let content = e.currentTarget.innerText.trim()
+    if(content == ''){
+      while (e.currentTarget.firstChild) e.currentTarget.removeChild(e.target.firstChild)
+    }
+    this.model.prop('role',e.currentTarget.innerText)
+    this.model.label(1, {attrs: {roleLabel: {width: e.currentTarget.offsetWidth}}})
+  }
+  events() {
+    return {
+      'input .linkCardInput': (e) => {this.manageCardInput(e)},
+      'input .linkRoleInput': (e) => {this.manageRoleInput(e)}
+    }
+  }
 }
-*/
+

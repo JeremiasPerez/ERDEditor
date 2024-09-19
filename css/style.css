@@ -430,3 +430,20 @@ body{
 #import{
   cursor:pointer;
 }
+.settings-element.disabled .slider{
+  cursor:default;
+  background-color: #eee;
+}
+.settings-element.disabled label{
+  opacity: 0.3;
+}
+#toolbarElements{
+  margin-right:200px;
+  display:flex;
+}
+#toolbarActions{
+  display:flex;
+}
+.draggableElement:hover{
+  fill: #e6f2ff;
+}

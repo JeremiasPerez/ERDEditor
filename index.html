@@ -25,30 +25,34 @@
 <body>
   <div id="toolbar">
     <div id="toolbarContent">
-      <div class="toolbarElement diagramElement" data-type="entity" id="entityElement" draggable="true">
-        <svg cursor="pointer" width="54px" height="34px" viewBox="0 0 54 34">
-          <rect width="50" height="30" x="1" y="1" fill="white" style="stroke:black;stroke-width:2;" />
-        </svg>
+      <div id="toolbarElements">
+        <div class="toolbarElement diagramElement" data-type="entity" id="entityElement" draggable="true">
+          <svg cursor="pointer" width="54px" height="34px" viewBox="0 0 54 34">
+            <rect class="draggableElement" width="50" height="30" x="1" y="1" fill="white" style="stroke:black;stroke-width:2;" />
+          </svg>
+        </div>
+        <div class="toolbarElement diagramElement" data-type="relationship" id="relationshipElement" draggable="true">
+          <svg cursor="pointer" width="54px" height="34px" viewBox="0 0 54 34">
+            <polygon class="draggableElement" width="50" height="30" points="1,16 26,31 51,16 26,1" x="0" y="0" fill="white" style="stroke:black;stroke-width:2;" />
+          </svg>
+        </div>
+        <div class="toolbarElement diagramElement" data-type="attribute" id="attributeElement" draggable="true">
+          <svg cursor="pointer" width="54px" height="40px" viewBox="0 0 54 40">
+            <ellipse class="draggableElement" width="50" height="30" cx="26" cy="16" rx="25" ry="15" fill="white" style="stroke:black;stroke-width:2;" />
+          </svg>
+        </div>
       </div>
-      <div class="toolbarElement diagramElement" data-type="relationship" id="relationshipElement" draggable="true">
-        <svg cursor="pointer" width="54px" height="34px" viewBox="0 0 54 34">
-          <polygon width="50" height="30" points="0,15 25,30 50,15 25,0" x="0" y="0" fill="white" style="stroke:black;stroke-width:2;" />
-        </svg>
-      </div>
-      <div class="toolbarElement diagramElement" data-type="attribute" id="attributeElement" draggable="true">
-        <svg cursor="pointer" width="54px" height="40px" viewBox="0 0 54 40">
-          <ellipse width="50" height="30" cx="26" cy="16" rx="25" ry="15" fill="white" style="stroke:black;stroke-width:2;" />
-        </svg>
-      </div>
-      <div class="toolbarElement" id="download">
-          <img src="img/download.png" height="34"/>
-      </div>
-      <div class="toolbarElement" id="import">
-        <img src="img/import.png" height="34"/>
-        <input type='file' id='file-input' accept=".json"/>
-      </div>
-      <div class="toolbarElement" id="imageExport">
-        <img src="img/image.png" height="34"/>
+      <div id="toolbarActions">
+        <div class="toolbarElement" id="download">
+          <img src="img/download.png" height="34" title="descargar como JSON"/>
+        </div>
+        <div class="toolbarElement" id="import">
+          <img src="img/import.png" height="34" title="importar fichero JSON"/>
+          <input type='file' id='file-input' accept=".json"/>
+        </div>
+        <!--<div class="toolbarElement" id="imageExport">
+          <img src="img/image.png" height="34"/>
+        </div>-->
       </div>
     </div>
   </div>
@@ -100,6 +104,13 @@
         <label>Clave</label>
         <label class="switch">
           <input id="isKeyInput" type="checkbox">
+          <span class="slider round"></span>
+        </label>
+      </div>
+      <div class="settings-element">
+        <label>Clave parcial</label>
+        <label class="switch">
+          <input id="isPartialKeyInput" type="checkbox">
           <span class="slider round"></span>
         </label>
       </div>
