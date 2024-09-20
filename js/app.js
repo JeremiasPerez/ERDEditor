@@ -281,7 +281,7 @@ document.querySelector('#paper').addEventListener('drop', (e) => {
 })
 
 const addTools = (model) => {
-  const types = ['erd.Relation','erd.Entity','erd.Attribute','erd.AttributeLink','erd.RelationshipLink']
+  const types = ['erd.Relation','erd.Entity','erd.Attribute','erd.AttributeLink','erd.RelationshipLink','erd.InheritanceLink']
   if(!types.includes(model.prop('type'))) return
   const elementView = model.findView(paper)
   let tools = []
@@ -306,6 +306,9 @@ const addTools = (model) => {
       break
     case 'erd.RelationshipLink':
       tools = [new linkTools.Vertices(), new linkTools.Remove()]
+      break
+    case 'erd.InheritanceLink':
+      tools = [new linkTools.Vertices(), new linkTools.Remove(), new SettingsButton()]
       break
   }
   const toolsView = new dia.ToolsView({tools: tools})

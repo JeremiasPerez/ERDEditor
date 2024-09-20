@@ -751,6 +751,9 @@ export class InheritanceLink extends dia.Link {
       type: 'erd.InheritanceLink',
       dimX: w,
       dimY: h,
+      subclass: null,
+      superclass: null,
+      turned: false,
       attrs: {
         line: {
           connection: true,
@@ -783,6 +786,9 @@ export class InheritanceLinkView extends dia.LinkView {
     let tgt = this.getTangentAtRatio(0.5)
     let angle = Math.atan((tgt.end.y-tgt.start.y)/(tgt.end.x-tgt.start.x))
     let deg = angle*180/Math.PI
+    // todo - arreglar parche temporal
+    if(this.sourcePoint.x < this.targetPoint.x) deg += 180
+    if(this.model.prop('turned')) deg += 180
     this.el.querySelector('.semicircle').style.transform = `translate(${point.x-this.model.prop('dimX')/2}px, ${point.y-this.model.prop('dimY')/2}px) rotate(${-90+deg}deg)`
     return this
   }
@@ -793,17 +799,11 @@ export class InheritanceLinkView extends dia.LinkView {
     })
     this.model.prop('source').on('change:position',() => {this.render()})
     this.model.prop('target').on('change:position',() => {this.render()})
+
+    // todo add view
   }
   manageSemicircleClick(e) {
-    let t = this.el.querySelector('.semicircle').style.transform
-    if(t == null || !t.includes('rotate(180deg)')){
-      if(t != null){
-        this.el.querySelector('.semicircle').style.transform = t+' rotate(180deg)'
-      }
-    }
-    else {
-      this.el.querySelector('.semicircle').style.transform = t.replace('rotate(180deg)','')
-    }
+    this.model.prop('turned', !this.model.prop('turned'))
   }
   events() {
     return {
