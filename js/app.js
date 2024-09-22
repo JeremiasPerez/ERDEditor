@@ -1,4 +1,5 @@
 //import {util, dia, shapes, elementTools, linkTools } from '../node_modules/@joint/core/joint.mjs';
+
 const dia = joint.dia
 const shapes = joint.shapes
 const util = joint.util
@@ -95,14 +96,17 @@ paper.on('blank:pointerdown cell:pointerdown', () => {
   document.activeElement.blur();
 });*/
 
-paper.on('element:mouseenter', elementView => {
+/*paper.on('element:mouseenter', elementView => {
   elementView.showTools();
 });
 paper.on('element:mouseleave', elementView => {
   elementView.hideTools();
-});
+});*/
 paper.on('cell:mouseleave', elementView => {
   elementView.hideTools();
+});
+paper.on('cell:mouseenter', elementView => {
+  elementView.showTools();
 });
 paper.on('cell:pointermove element:pointermove link:pointermove', (cellView, evt, x, y) => {
   if (!paper.model.get('linking')) return
@@ -231,10 +235,10 @@ const manageConnection = (target) => {
 
 
 paper.on('link:mouseenter', (linkView) => {
-  linkView.showTools();
+  //linkView.showTools();
 });
 paper.on('link:mouseleave', (linkView) => {
-  linkView.hideTools();
+  //linkView.hideTools();
 });
 paper.on('blank:pointerup', (evt, x, y) => {
   if (!paper.model.get('linking')) return
@@ -302,13 +306,13 @@ const addTools = (model) => {
         new LinkButton()]
       break
     case 'erd.AttributeLink':
-      tools = [new linkTools.Vertices(), new linkTools.Remove()]
+      tools = [new linkTools.Vertices(), new linkTools.Remove({scale: 1.5})]
       break
     case 'erd.RelationshipLink':
-      tools = [new linkTools.Vertices(), new linkTools.Remove()]
+      tools = [new linkTools.Vertices(), new linkTools.Remove({scale: 1.5})]
       break
     case 'erd.InheritanceLink':
-      tools = [new linkTools.Vertices(), new linkTools.Remove(), new SettingsButton()]
+      tools = [new linkTools.Remove({distance: 25, scale: 1.5}), new SettingsButton({distance: -25, scale: 1.5})]
       break
   }
   const toolsView = new dia.ToolsView({tools: tools})
@@ -323,7 +327,6 @@ graph.on('add', (model, collection, options) => {
 document.querySelector('#download').addEventListener('click',(e) => {
   let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(graph.toJSON()))
   var a = document.createElement("a");
-  a.click();
   a.setAttribute("href",dataStr)
   a.setAttribute("download", "diagram.json")
   document.body.appendChild(a);
@@ -356,6 +359,42 @@ document.querySelector('#file-input').addEventListener('change',(ev) => {
   })
   reader.readAsText(ev.currentTarget.files[0]);
 })
+let preImageExport = () => {
+  let cells = graph.getCells()
+  cells.forEach((c) => {
+    c.findView(paper).hideTools()
+    let elementsWithName = ['erd.Entity','erd.Attribute','erd.Relation']
+    if (!elementsWithName.includes(c.prop('type'))) return
+    c.attr('elementName/display','none')
+    c.attr('elementText/display',null)
+    c.attr('elementText/text',c.prop('labelText'))
+  })
+}
+let postImageExport = () => {
+  let cells = graph.getCells()
+  cells.forEach((c) => {
+    let elementsWithName = ['erd.Entity','erd.Attribute','erd.Relation']
+    if (!elementsWithName.includes(c.prop('type'))) return
+    c.attr('elementName/display',null)
+    c.attr('elementText/display','none')
+  })
+}
+document.querySelector('#imageExport').addEventListener('click',async (e) => {
+  preImageExport()
+  htmlToImage.toPng(document.querySelector('#paper')).then((dataUrl) => {
+    let a = document.createElement('a')
+    a.setAttribute('href',dataUrl)
+    a.setAttribute('download', 'diagram.png')
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+
+    postImageExport()
+  })
+    .catch((error) => {
+      postImageExport()
+    })
+})
 
 
 let paperCont = document.querySelector('#paperCont')
@@ -369,64 +408,3 @@ const resizeObserver = new ResizeObserver((entries) => {
 });
 resizeObserver.observe(paperCont);
 
-
-/*document.querySelector('#exportAsPng').addEventListener('click',async (e) => {
-  const dataHeader = 'data:image/svg+xml;charset=utf-8'
-  const $svg = document.querySelector('#paper svg')
-  const $holder = document.getElementById('img-container')
-
-  const destroyChildren = $element => {
-    while ($element.firstChild) {
-      const $lastChild = $element.lastChild ?? false
-      if ($lastChild) $element.removeChild($lastChild)
-    }
-  }
-
-  const loadImage = async url => {
-    const $img = document.createElement('img')
-    $img.src = url
-    return new Promise((resolve, reject) => {
-      $img.onload = () => resolve($img)
-      $img.onerror = reject
-    })
-  }
-
-  const serializeAsXML = $e => (new XMLSerializer()).serializeToString($e)
-
-  const encodeAsUTF8 = s => `${dataHeader},${encodeURIComponent(s)}`
-  const encodeAsB64 = s => `${dataHeader};base64,${btoa(s)}`
-
-  const convertSVGtoImg = async e => {
-    const format = 'png'
-    destroyChildren($holder)
-
-    const svgData = encodeAsUTF8(serializeAsXML($svg))
-
-    const img = await loadImage(svgData)
-
-    const $canvas = document.createElement('canvas')
-    $canvas.width = $svg.clientWidth
-    $canvas.height = $svg.clientHeight
-    $canvas.getContext('2d').drawImage(img, 0, 0, $svg.clientWidth, $svg.clientHeight)
-
-    const dataURL = await $canvas.toDataURL(`image/${format}`, 1.0)
-    console.log(dataURL)
-
-    const $img = document.createElement('img')
-    $img.src = dataURL
-    $holder.appendChild($img)
-  }
-
-  convertSVGtoImg()
-
-// todo -> antes de exportar, convertir los foreignObjects a texts
-await svg2pngWasm.initialize(fetch('https://unpkg.com/svg2png-wasm/svg2png_wasm_bg.wasm'))
-//const font = await fetch('./Roboto.ttf').then((res) => res.arrayBuffer());
- @type {Uint8Array}
-Const png = await svg2pngWasm.svg2png(
-  '<svg viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg">'+document.querySelector('#paper svg').innerHTML+'</svg>'
-);
-document.getElementById('img-container').src = URL.createObjectURL(
-  new Blob([png], { type: 'image/png' }),
-);
-})*/

@@ -426,6 +426,9 @@ body{
 #import{
   cursor:pointer;
 }
+#imageExport{
+  cursor:pointer;
+}
 .settings-element.disabled .slider{
   cursor:default;
   background-color: #eee;

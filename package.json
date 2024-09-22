@@ -23,7 +23,9 @@
   },
   "dependencies": {
     "@joint/core": "^4.0.4",
+    "convert-svg-to-png": "^0.6.4",
     "dom-to-image-more": "^3.4.3",
+    "html-to-image": "^1.11.11",
     "svg2png-wasm": "^1.4.1"
   }
 }

@@ -58,6 +58,13 @@ const showSettings = (element) => {
       settingsCont.querySelector('#showRoleInput').checked = element.model.prop('showRoles')
       settingsCont.querySelector('#showRoleInput').addEventListener('change', (e) => {element.model.setShowRoles(e.currentTarget.checked)})
       break
+    case 'erd.InheritanceLink':
+      settingsCont = document.querySelector('#inheritanceLinkSettingsContent').content.cloneNode(true);
+      settingsCont.querySelector("#isTotalInheritance").checked = element.model.prop('isTotal')
+      settingsCont.querySelector("#isTotalInheritance").addEventListener('change', (e) => {element.model.prop('isTotal',e.currentTarget.checked)})
+      //settingsCont.querySelector('#showRoleInput').checked = element.model.prop('showRoles')
+      //settingsCont.querySelector('#showRoleInput').addEventListener('change', (e) => {element.model.setShowRoles(e.currentTarget.checked)})
+      break
   }
   settingsContent.appendChild(settingsCont);
   container.style.left = (absPos.x+30)+'px'
@@ -231,6 +238,7 @@ const entityMarkup = util.svg/* xml */`
         <div @selector="entityName" class="elementNameInput" contenteditable="true" style="text-transform:uppercase" data-placeholder="ENTIDAD" autocomplete="off" autocorrect="off" spellcheck="false"></div>
       </div>
     </foreignObject>
+    <text @selector="elementText" class="elementNameText"/>
 `
 export class Entity extends dia.Element {
   preinitialize() {
@@ -287,6 +295,15 @@ export class Entity extends dia.Element {
           height: 'calc(h - 10)',
           x: 5,
           y: 5
+        },
+        elementText: {
+          width: 'calc(w - 10)',
+          height: 'calc(h - 10)',
+          display: 'none',
+          dominantBaseline: 'middle',
+          textAnchor: 'middle',
+          x: 'calc(w/2)',
+          y: 'calc(h/2)'
         }
       }
     }
@@ -334,7 +351,9 @@ const attributteMarkup = util.svg/* xml */`
       <div @selector="content" xmlns="http://www.w3.org/1999/xhtml" class="elementNameContainer">
         <div @selector="attributeName" class="elementNameInput" contenteditable="true" style="text-transform:capitalize" data-placeholder="atributo" autocomplete="off" autocorrect="off" spellcheck="false"></div>
       </div>
-    </foreignObject>`
+    </foreignObject>
+    <text @selector="elementText" class="elementNameText"/>
+`
 export class Attribute extends dia.Element {
   preinitialize() {
     this.markup = attributteMarkup
@@ -403,6 +422,17 @@ export class Attribute extends dia.Element {
           style:{
             textDecorationThickness: '2px'
           }
+        },
+        elementText: {
+          width: 'calc(w - 10)',
+          height: 'calc(h - 10)',
+          display: 'none',
+          textAnchor: 'middle',
+          x: 'calc(w/2)',
+          y: 'calc(h/2+5)',
+          style:{
+            textDecorationThickness: '2px'
+          }
         }
       }
     }
@@ -422,12 +452,15 @@ export class AttributeView extends dia.ElementView {
     // is (partial) key
     if(this.model.prop('isKey')) {
       this.el.querySelector('.elementNameInput').style.textDecorationLine = 'underline'
+      this.model.attr('elementText/textDecoration','underline')
     } else if(this.model.prop('isPartialKey')) { // is partial key
       this.el.querySelector('.elementNameInput').style.textDecorationLine = 'underline'
       this.el.querySelector('.elementNameInput').style.textDecorationStyle = 'dotted'
+      this.model.attr('elementText/textDecoration','underline dotted')
     } else { // not key
       this.el.querySelector('.elementNameInput').style.textDecorationLine = null
       this.el.querySelector('.elementNameInput').style.textDecorationStyle = null
+      this.model.attr('elementText/textDecoration',null)
     }
     return this
   }
@@ -438,7 +471,7 @@ export class AttributeView extends dia.ElementView {
       this.render()
     })
   }
-  manageInput(e) {
+  manageInput(e){
     this.model.prop('labelText',e.currentTarget.innerText.trim())
     if(e.currentTarget.innerText.trim() == ''){
       while (e.currentTarget.firstChild) e.currentTarget.removeChild(e.currentTarget.firstChild)
@@ -462,7 +495,8 @@ const relationMarkup = util.svg/* xml */`
       <div @selector="content" xmlns="http://www.w3.org/1999/xhtml" class="elementNameContainer">
         <div @selector="attributeName" class="elementNameInput" contenteditable="true" style="text-transform:uppercase" data-placeholder="relación" autocomplete="off" autocorrect="off" spellcheck="false"></div>
       </div>
-    </foreignObject>`
+    </foreignObject>
+        <text @selector="elementText" class="elementNameText"/>`
 export class Relation extends dia.Element {
   preinitialize() {
     this.markup = relationMarkup;
@@ -515,6 +549,15 @@ export class Relation extends dia.Element {
           height: 'calc(h - 10)',
           x: 5,
           y: 5
+        },
+        elementText: {
+          width: 'calc(w - 10)',
+          height: 'calc(h - 10)',
+          display: 'none',
+          dominantBaseline: 'middle',
+          textAnchor: 'middle',
+          x: 'calc(w/2)',
+          y: 'calc(h/2)'
         }
       }
     }
@@ -735,7 +778,9 @@ export class RelationshipLinkView extends dia.LinkView {
 // INHERITANCE LINKS
 const inheritanceLinkMarkup = util.svg/* xml */`
   <path @selector="wraper" fill="none" stroke="transparent" cursor="pointer"/>
-  <path @selector="line" fill="none" pointer-events="none"/>
+  <path @selector="line" fill="none" cursor="pointer"/>
+  <path @selector="lineDouble1" fill="none" cursor="pointer"/>
+  <path @selector="lineDouble2" fill="none" cursor="pointer"/>
   <path @selector="semicircle" class="semicircle" fill="none" cursor="pointer"/>
 `
 export class InheritanceLink extends dia.Link {
@@ -754,6 +799,7 @@ export class InheritanceLink extends dia.Link {
       subclass: null,
       superclass: null,
       turned: false,
+      isTotal: false,
       attrs: {
         line: {
           connection: true,
@@ -761,6 +807,20 @@ export class InheritanceLink extends dia.Link {
           strokeWidth: 2,
           strokeLinejoin: 'round',
           targetMarker: 'none'
+        },
+        lineDouble1: {
+          stroke: 'black',
+          strokeWidth: 2,
+          strokeLinejoin: 'round',
+          targetMarker: 'none',
+          display: 'none'
+        },
+        lineDouble2: {
+          stroke: 'black',
+          strokeWidth: 2,
+          strokeLinejoin: 'round',
+          targetMarker: 'none',
+          display: 'none'
         },
         wrapper: {
           connection: true,
@@ -782,12 +842,29 @@ export class InheritanceLink extends dia.Link {
 export class InheritanceLinkView extends dia.LinkView {
   render() {
     dia.LinkView.prototype.render.apply(this, arguments)
+    if(this.model.prop('isTotal')){
+      this.model.attr('line/display','none')
+      this.model.attr('lineDouble1/display',null)
+      this.model.attr('lineDouble2/display',null)
+      this.model.attr('lineDouble1/d',`M ${this.sourcePoint.x-2},${this.sourcePoint.y} L ${this.targetPoint.x-2},${this.targetPoint.y}`)
+      this.model.attr('lineDouble2/d',`M ${this.sourcePoint.x+2},${this.sourcePoint.y} L ${this.targetPoint.x+2},${this.targetPoint.y}`)
+      /*if(this.sourcePoint.x != this.targetPoint.x){
+        this.model.attr('lineTotal/x',)
+      } else{
+
+      }*/
+    }
+    else {
+      this.model.attr('line/display',null)
+      this.model.attr('lineDouble1/display','none')
+      this.model.attr('lineDouble2/display','none')
+    }
     let point = this.getPointAtRatio(0.5)
     let tgt = this.getTangentAtRatio(0.5)
     let angle = Math.atan((tgt.end.y-tgt.start.y)/(tgt.end.x-tgt.start.x))
     let deg = angle*180/Math.PI
     // todo - arreglar parche temporal
-    if(this.sourcePoint.x < this.targetPoint.x) deg += 180
+    if(this.sourcePoint.x <= this.targetPoint.x) deg += 180
     if(this.model.prop('turned')) deg += 180
     this.el.querySelector('.semicircle').style.transform = `translate(${point.x-this.model.prop('dimX')/2}px, ${point.y-this.model.prop('dimY')/2}px) rotate(${-90+deg}deg)`
     return this
