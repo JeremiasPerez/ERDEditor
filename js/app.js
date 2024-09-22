@@ -21,7 +21,9 @@ import {
   RelationshipLink,
   RelationshipLinkView,
   InheritanceLink,
-  InheritanceLinkView
+  InheritanceLinkView,
+  ConnectionPoint,
+  ConnectionPointView
 } from './Node.js';
 
 

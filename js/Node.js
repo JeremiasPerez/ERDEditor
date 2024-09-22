@@ -908,3 +908,64 @@ export class InheritanceLinkView extends dia.LinkView {
 }
 
 // CONNECTION POINT
+const connectionPointMarkup = util.svg/* xml */`
+    <circle @selector="outerCircle"/>
+    <foreignObject @selector="connectionTypeLabelObject">
+    <div @selector="content" xmlns="http://www.w3.org/1999/xhtml" class="connectionTypeLabelContainer">
+      <div @selector="connectionTypeLabel" class="connectionTypeLabelInput" contenteditable="true" style="text-transform:lowercase" data-placeholder="X" autocomplete="off" autocorrect="off" spellcheck="false"></div>
+    </div>
+  </foreignObject>
+    `
+export class ConnectionPoint extends dia.Element {
+  preinitialize() {
+    this.markup = connectionPointMarkup;
+  }
+  initialize() {
+    dia.Element.prototype.initialize.apply(this, arguments)
+    let label = this.prop('labelText')
+    if(label != null && typeof label === 'object') this.prop('labelText',Object.values(label).join(''))
+  }
+  defaults() {
+    const clipId = util.uuid();
+
+    return {
+      ...super.defaults,
+      type: 'erd.Relation',
+      size: {
+        width: 50,
+        height: 50
+      },
+      labelText: '',
+      attrs: {
+        root: {
+          cursor: 'move'
+        },
+        outerCircle: {
+          r: 'calc(w/2)',
+          cx: 'calc(w/2)',
+          cy: 'calc(h/2)',
+          stroke: 'black',
+          strokeWidth: '2'
+        },
+        connectionTypeLabelObject: {
+          width: 'calc(w.10)',
+          height: 'calc(h-10)',
+          x: 5,
+          y: 5
+        }
+      }
+    }
+  }
+}
+
+export class ConnectionPointView extends dia.ElementView {
+  render() {
+    dia.LinkView.prototype.render.apply(this, arguments)
+  }
+  initialize() {
+    dia.ElementView.prototype.initialize.apply(this, arguments)
+    this.listenTo(this.model, 'change', (model, options) => {
+      this.render()
+    })
+  }
+}
