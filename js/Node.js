@@ -1,5 +1,6 @@
 //import { dia, shapes, util, elementTools, linkTools, mvc } from '../node_modules/@joint/core/joint.mjs';
 const dia = joint.dia
+const g = joint.g
 const shapes = joint.shapes
 const util = joint.util
 const elementTools = joint.elementTools
@@ -843,19 +844,36 @@ export class InheritanceLinkView extends dia.LinkView {
   render() {
     dia.LinkView.prototype.render.apply(this, arguments)
     if(this.model.prop('isTotal')){
-      this.model.attr('line/display','none')
+      this.model.attr('line/stroke','transparent')
       this.model.attr('lineDouble1/display',null)
       this.model.attr('lineDouble2/display',null)
-      this.model.attr('lineDouble1/d',`M ${this.sourcePoint.x-2},${this.sourcePoint.y} L ${this.targetPoint.x-2},${this.targetPoint.y}`)
-      this.model.attr('lineDouble2/d',`M ${this.sourcePoint.x+2},${this.sourcePoint.y} L ${this.targetPoint.x+2},${this.targetPoint.y}`)
-      /*if(this.sourcePoint.x != this.targetPoint.x){
-        this.model.attr('lineTotal/x',)
-      } else{
-
-      }*/
+      let sep = 4
+      // todo -> mejorar el cálculo teniendo en cuenta el ángulo
+      let offset = -2
+      if(this.sourcePoint.x <= this.targetPoint.x) offset = 2
+      let x1 = this.sourceBBox.x+this.sourceBBox.width/2 + offset
+      let y1 = this.sourceBBox.y+this.sourceBBox.height/2
+      let x2 = this.targetBBox.x+this.targetBBox.width/2 + offset
+      let y2 = this.targetBBox.y+this.targetBBox.height/2
+      let l = new g.Line(new g.Point(x1, y1), new g.Point(x2, y2));
+      let srcRect = new g.Rect(this.sourceBBox.x,this.sourceBBox.y,this.sourceBBox.width,this.sourceBBox.height)
+      let tgtRect = new g.Rect(this.targetBBox.x,this.targetBBox.y,this.targetBBox.width,this.targetBBox.height)
+      let srcIntersections1 = srcRect.intersectionWithLine(l)
+      let srcIntersections2 = tgtRect.intersectionWithLine(l)
+      let a = Math.atan((y2-y1)/(x2 - x1))
+      let alpha = (Math.PI/2)-a
+      let xb1 = x1 + sep * Math.cos(alpha)
+      let yb1 = y1 - sep * Math.sin(alpha)
+      let xb2 = x2 + sep * Math.cos(alpha)
+      let yb2 = y2 - sep * Math.sin(alpha)
+      let l2 = new g.Line(new g.Point(xb1, yb1), new g.Point(xb2, yb2));
+      let tgtIntersections1 = srcRect.intersectionWithLine(l2)
+      let tgtIntersections2 = tgtRect.intersectionWithLine(l2)
+      this.model.attr('lineDouble1/d',`M ${srcIntersections1[0].x},${srcIntersections1[0].y} L ${srcIntersections2[0].x},${srcIntersections2[0].y}`)
+      this.model.attr('lineDouble2/d',`M ${tgtIntersections1[0].x},${tgtIntersections1[0].y} L ${tgtIntersections2[0].x},${tgtIntersections2[0].y}`)
     }
     else {
-      this.model.attr('line/display',null)
+      this.model.attr('line/stroke','black')
       this.model.attr('lineDouble1/display','none')
       this.model.attr('lineDouble2/display','none')
     }
@@ -888,3 +906,5 @@ export class InheritanceLinkView extends dia.LinkView {
     }
   }
 }
+
+// CONNECTION POINT
