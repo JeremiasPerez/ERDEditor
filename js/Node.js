@@ -28,10 +28,10 @@ const addConnectionPoint = (element) => {
   let superCX = superBBox.x + superBBox.width/2
   let superCY = superBBox.y + superBBox.height/2
   connectionPoint.position(superCX + (subCX - superCX)/2 - 15, superCY + (subCY - superCY)/2 - 15)
-  //connectionPoint.addTo(paper.model)
+  connectionPoint.addTo(paper.model)
 
 
-  /*paper.model.removeCells(element.model) // eliminar conexión (simple) original
+  paper.model.removeCells(element.model) // eliminar conexión (simple) original
 
   let conSubclass2Point = new InheritanceLink({
     source: subclass,
@@ -47,7 +47,7 @@ const addConnectionPoint = (element) => {
     isTotal: wasTotal,
     linkType: 'entity2point'
   })
-  conPoint2Superclass.addTo(paper.model)*/
+  conPoint2Superclass.addTo(paper.model)
 
   // show settings for the connection point
 }
@@ -996,7 +996,7 @@ export class ConnectionPoint extends dia.Element {
 
     return {
       ...super.defaults,
-      type: 'erd.Relation',
+      type: 'erd.ConnectionPoint',
       connectionType: '',
       superclassConnection: null,
       subclassConnections: [],
@@ -1030,7 +1030,7 @@ export class ConnectionPoint extends dia.Element {
 }
 export class ConnectionPointView extends dia.ElementView {
   render() {
-    dia.LinkView.prototype.render.apply(this, arguments)
+    dia.ElementView.prototype.render.apply(this, arguments)
   }
   initialize() {
     dia.ElementView.prototype.initialize.apply(this, arguments)
