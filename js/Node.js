@@ -6,6 +6,55 @@ const util = joint.util
 const elementTools = joint.elementTools
 const linkTools = joint.linkTools
 
+const addConnectionPoint = (element) => {
+  //element.model.prop('partOfGroup', true) // no hace falta, se elimina el link y se crea uno nuevo
+  let wasTotal = element.model.prop('isTotal')
+  let paper = element.paper
+  //let subclass = element.model.prop('subclass')
+  //let superclass = element.model.prop('superclass')
+  let subclass = element.model.source()
+  let superclass = element.model.target()
+  //let subView = paper.findView(subclass.model)
+  //let superView = paper.findView(superclass.model)
+  let subView = subclass
+  let superView = superclass
+  let subBBox = subView.getBBox()
+  let superBBox = superView.getBBox()
+  let connectionPoint = new ConnectionPoint({
+    isTotal: wasTotal
+  })
+  let subCX = subBBox.x + subBBox.width/2
+  let subCY = subBBox.y + subBBox.height/2
+  let superCX = superBBox.x + superBBox.width/2
+  let superCY = superBBox.y + superBBox.height/2
+  connectionPoint.position(superCX + (subCX - superCX)/2 - 15, superCY + (subCY - superCY)/2 - 15)
+  //connectionPoint.addTo(paper.model)
+
+
+  /*paper.model.removeCells(element.model) // eliminar conexión (simple) original
+
+  let conSubclass2Point = new InheritanceLink({
+    source: subclass,
+    target: connectionPoint,
+    isTotal: false,
+    linkType: 'entity2point'
+  })
+  conSubclass2Point.addTo(paper.model)
+
+  let conPoint2Superclass = new InheritanceLink({
+    source: connectionPoint,
+    target: superclass,
+    isTotal: wasTotal,
+    linkType: 'entity2point'
+  })
+  conPoint2Superclass.addTo(paper.model)*/
+
+  // show settings for the connection point
+}
+
+const removeConnectionPoint = (element) => {
+
+}
 
 const showSettings = (element) => {
   let container = document.querySelector('#settingsContainer')
@@ -60,11 +109,16 @@ const showSettings = (element) => {
       settingsCont.querySelector('#showRoleInput').addEventListener('change', (e) => {element.model.setShowRoles(e.currentTarget.checked)})
       break
     case 'erd.InheritanceLink':
+      // TODO si está agrupado, settings generales de grupo
       settingsCont = document.querySelector('#inheritanceLinkSettingsContent').content.cloneNode(true);
       settingsCont.querySelector("#isTotalInheritance").checked = element.model.prop('isTotal')
       settingsCont.querySelector("#isTotalInheritance").addEventListener('change', (e) => {element.model.prop('isTotal',e.currentTarget.checked)})
-      //settingsCont.querySelector('#showRoleInput').checked = element.model.prop('showRoles')
-      //settingsCont.querySelector('#showRoleInput').addEventListener('change', (e) => {element.model.setShowRoles(e.currentTarget.checked)})
+      if(!element.model.prop('partOfGroup')){
+        settingsCont.querySelector('#addConnectionPoint').checked = false
+        settingsCont.querySelector('#addConnectionPoint').addEventListener('change', (e) => {
+          addConnectionPoint(element)
+        })
+      }
       break
   }
   settingsContent.appendChild(settingsCont);
@@ -788,6 +842,16 @@ export class InheritanceLink extends dia.Link {
   preinitialize() {
     this.markup = inheritanceLinkMarkup
   }
+  initialize(){
+    dia.Link.prototype.initialize.apply(this, arguments)
+    if(!this.prop('turned')){
+      this.prop('subclass',this.prop('source'))
+      this.prop('superclass',this.prop('target'))
+    } else{
+      this.prop('subclass',this.prop('target'))
+      this.prop('superclass',this.prop('source'))
+    }
+  }
   defaults() {
     const clipId = util.uuid();
     const w = 30
@@ -795,12 +859,14 @@ export class InheritanceLink extends dia.Link {
     return {
       ...super.defaults,
       type: 'erd.InheritanceLink',
+      linkType: 'entity2entity',
       dimX: w,
       dimY: h,
       subclass: null,
       superclass: null,
       turned: false,
       isTotal: false,
+      partOfGroup: false,
       attrs: {
         line: {
           connection: true,
@@ -931,9 +997,13 @@ export class ConnectionPoint extends dia.Element {
     return {
       ...super.defaults,
       type: 'erd.Relation',
+      connectionType: '',
+      superclassConnection: null,
+      subclassConnections: [],
+      isTotal: false,
       size: {
-        width: 50,
-        height: 50
+        width: 30,
+        height: 30
       },
       labelText: '',
       attrs: {
@@ -945,10 +1015,11 @@ export class ConnectionPoint extends dia.Element {
           cx: 'calc(w/2)',
           cy: 'calc(h/2)',
           stroke: 'black',
-          strokeWidth: '2'
+          strokeWidth: '2',
+          fill: 'white'
         },
         connectionTypeLabelObject: {
-          width: 'calc(w.10)',
+          width: 'calc(w-10)',
           height: 'calc(h-10)',
           x: 5,
           y: 5
@@ -957,7 +1028,6 @@ export class ConnectionPoint extends dia.Element {
     }
   }
 }
-
 export class ConnectionPointView extends dia.ElementView {
   render() {
     dia.LinkView.prototype.render.apply(this, arguments)

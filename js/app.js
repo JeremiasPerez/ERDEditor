@@ -243,8 +243,11 @@ paper.on('link:mouseleave', (linkView) => {
   //linkView.hideTools();
 });
 paper.on('blank:pointerup', (evt, x, y) => {
+  console.log(evt)
   if (!paper.model.get('linking')) return
+  console.log(paper.model.get('linking'))
   let el = paper.findViewsFromPoint({x: x, y: y})
+  console.log(el)
   if (el.length > 0) manageConnection(el[0])
   paper.model.set('linking',false)
   let link = document.querySelector('[model-id=connectionLink]')
