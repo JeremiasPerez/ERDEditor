@@ -43,7 +43,9 @@ const namespace = {
     RelationshipLink,
     RelationshipLinkView,
     InheritanceLink,
-    InheritanceLinkView
+    InheritanceLinkView,
+    ConnectionPoint,
+    ConnectionPointView
   }
 };
 const graph = new dia.Graph({linking: false}, { cellNamespace: namespace });
@@ -61,7 +63,7 @@ const paper = new dia.Paper({
   }
 });
 
-// CREAR CONEXIÓN AUXILIAR
+// CREAR CONEXIÓN AUXILIAR (la que se ve al hacer drag&drop
 const initAuxConnection = () => {
   const link = new shapes.standard.Link();
   link.set('id','connectionLink')
@@ -130,7 +132,7 @@ const validateConnection = (source, target) => {
   let targetType = target.model.get('type')
   // valid connections: attribute - entity, attribute - relation, attribute - attribute, relation - entity
   let validCons = [
-    ['erd.Entity','erd.Attribute'],['erd.Relation','erd.Attribute'],['erd.Attribute','erd.Attribute'],['erd.Relation','erd.Entity'],['erd.Entity','erd.Entity']
+    ['erd.Entity','erd.Attribute'],['erd.Relation','erd.Attribute'],['erd.Attribute','erd.Attribute'],['erd.Relation','erd.Entity'],['erd.Entity','erd.Entity'],['erd.Entity','erd.ConnectionPoint']
   ]
   let con = validCons.find(((el) => (el[0] == sourceType && el[1] == targetType) || (el[1] == sourceType && el[0] == targetType)))
 
@@ -219,14 +221,22 @@ const manageConnection = (target) => {
     link.addCardinalityLabel()
     link.addRoleLabel()
   }
+  else if(con.includes('erd.Entity') && con.includes('erd.ConnectionPoint')){
+    let con = source.model.get('type') == 'erd.ConnectionPoint' ? source : target
+    let ent = source.model.get('type') == 'erd.Entity' ? source : target
+    link = new InheritanceLink({
+      source: ent.model,
+      target: con.model,
+      showSemicircle: true,
+      isTotal: false
+    })
+  }
   else if(con.includes('erd.Attribute')){
     link = new AttributeLink({
       source: source.model,
       target: target.model
     })
   } else {
-    console.log('inheritance link')
-    // todo create inheritance link
     link = new InheritanceLink({
       source: source.model,
       target: target.model

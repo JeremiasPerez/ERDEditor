@@ -45,10 +45,13 @@ const addConnectionPoint = (element) => {
     source: connectionPoint,
     target: superclass,
     isTotal: wasTotal,
-    linkType: 'entity2point'
+    linkType: 'entity2point',
+    showSemicircle: false
   })
   conPoint2Superclass.addTo(paper.model)
 
+  connectionPoint.prop('superclassConnection',conPoint2Superclass)
+  connectionPoint.prop('subclassConnections',[conSubclass2Point])
   // show settings for the connection point
 }
 
@@ -113,10 +116,21 @@ const showSettings = (element) => {
       settingsCont = document.querySelector('#inheritanceLinkSettingsContent').content.cloneNode(true);
       settingsCont.querySelector("#isTotalInheritance").checked = element.model.prop('isTotal')
       settingsCont.querySelector("#isTotalInheritance").addEventListener('change', (e) => {element.model.prop('isTotal',e.currentTarget.checked)})
-      if(!element.model.prop('partOfGroup')){
+      if(!element.model.prop('partOfGroup')){ // todo -> no hace falta
         settingsCont.querySelector('#addConnectionPoint').checked = false
         settingsCont.querySelector('#addConnectionPoint').addEventListener('change', (e) => {
           addConnectionPoint(element)
+        })
+      }
+      break
+    case 'erd.ConnectionPoint':
+      settingsCont = document.querySelector('#inheritanceLinkSettingsContent').content.cloneNode(true);
+      settingsCont.querySelector("#isTotalInheritance").checked = element.model.prop('isTotal')
+      settingsCont.querySelector("#isTotalInheritance").addEventListener('change', (e) => {element.model.prop('isTotal',e.currentTarget.checked)})
+      if(element.model.prop('partOfGroup')){ // todo -> no hace falta
+        settingsCont.querySelector('#addConnectionPoint').checked = true
+        settingsCont.querySelector('#addConnectionPoint').addEventListener('change', (e) => {
+          removeConnectionPoint(element)
         })
       }
       break
@@ -867,6 +881,7 @@ export class InheritanceLink extends dia.Link {
       turned: false,
       isTotal: false,
       partOfGroup: false,
+      showSemicircle: true,
       attrs: {
         line: {
           connection: true,
@@ -915,6 +930,7 @@ export class InheritanceLinkView extends dia.LinkView {
       this.model.attr('lineDouble2/display',null)
       let sep = 4
       // todo -> mejorar el cálculo teniendo en cuenta el ángulo
+      // todo -> mejorar la intersección teniendo en cuenta la forma
       let offset = -2
       if(this.sourcePoint.x <= this.targetPoint.x) offset = 2
       let x1 = this.sourceBBox.x+this.sourceBBox.width/2 + offset
@@ -943,14 +959,19 @@ export class InheritanceLinkView extends dia.LinkView {
       this.model.attr('lineDouble1/display','none')
       this.model.attr('lineDouble2/display','none')
     }
-    let point = this.getPointAtRatio(0.5)
-    let tgt = this.getTangentAtRatio(0.5)
-    let angle = Math.atan((tgt.end.y-tgt.start.y)/(tgt.end.x-tgt.start.x))
-    let deg = angle*180/Math.PI
-    // todo - arreglar parche temporal
-    if(this.sourcePoint.x <= this.targetPoint.x) deg += 180
-    if(this.model.prop('turned')) deg += 180
-    this.el.querySelector('.semicircle').style.transform = `translate(${point.x-this.model.prop('dimX')/2}px, ${point.y-this.model.prop('dimY')/2}px) rotate(${-90+deg}deg)`
+    if(this.model.prop('showSemicircle')){
+      // todo - arreglar parche temporal para el desplazamioento
+      this.model.attr('semicircle/display',null)
+      let point = this.getPointAtRatio(0.5)
+      let tgt = this.getTangentAtRatio(0.5)
+      let angle = Math.atan((tgt.end.y-tgt.start.y)/(tgt.end.x-tgt.start.x))
+      let deg = angle*180/Math.PI
+      if(this.sourcePoint.x <= this.targetPoint.x) deg += 180
+      if(this.model.prop('turned')) deg += 180
+      this.el.querySelector('.semicircle').style.transform = `translate(${point.x-this.model.prop('dimX')/2}px, ${point.y-this.model.prop('dimY')/2}px) rotate(${-90+deg}deg)`
+    } else{
+      this.model.attr('semicircle/display','none')
+    }
     return this
   }
   initialize() {
@@ -964,7 +985,38 @@ export class InheritanceLinkView extends dia.LinkView {
     // todo add view
   }
   manageSemicircleClick(e) {
-    this.model.prop('turned', !this.model.prop('turned'))
+    let paper = this.paper
+    if(this.model.prop('linkSubtype') == 'entity2entity'){
+      this.model.prop('turned', !this.model.prop('turned'))
+    } else {  // todo si está conectado a connection point, cambia la funcionalidad
+      let conPoint = null
+      if(this.model.source().prop('type') == 'erd.ConnectionPoint') conPoint = this.model.source()
+      else conPoint = this.model.target()
+      // borrar / crear la conexión con la superclase para conservar la dirección
+      let oldSuperConn = conPoint.prop('superclassConnection')
+      let superConnEntity = null
+      if(oldSuperConn.source().prop('type') == 'erd.Entity') superConnEntity = oldSuperConn.source()
+      else superConnEntity = oldSuperConn.target()
+      let newSuperConn = new InheritanceLink({
+        source: superConnEntity,
+        target: conPoint,
+        isTotal: false,
+        showSemicircle: true,
+        linkSubtype: 'entity2point'
+      })
+      paper.model.removeCells(oldSuperConn)
+      newSuperConn.addTo(paper.model)
+
+      // modificar la conexión sobre la que se ha hecho click (la que tenía el semicírculo) - en este caso no hace falta re-crearla porque da igual la dirección
+      this.model.prop('showSemicircle',false)
+      this.model.prop('isTotal',conPoint.prop('isTotal'))
+
+      let subclassConnections = conPoint.prop('subclassConnections')
+      let ind = subclassConnections.findIndex((c) => {c.id == this.model.id})
+      subclassConnections.splice(ind,1,newSuperConn)
+      conPoint.prop('subclassConnections',subclassConnections)
+      conPoint.prop('superclassConnection',this.model)
+    }
   }
   events() {
     return {
@@ -1037,5 +1089,19 @@ export class ConnectionPointView extends dia.ElementView {
     this.listenTo(this.model, 'change', (model, options) => {
       this.render()
     })
+  }
+  manageInput(e) {
+    /*this.model.prop('labelText',e.currentTarget.innerText.trim())
+    if(e.currentTarget.innerText.trim() == ''){
+      while (e.currentTarget.firstChild) e.currentTarget.removeChild(e.currentTarget.firstChild)
+      this.model.prop('size/width',this.model.get('initialSize').width)
+    } else{
+      this.model.prop('size/width',e.currentTarget.offsetWidth)
+    }*/
+  }
+  events () {
+    return {
+      'input .connectionTypeLabelInput': (e) => {this.manageInput(e)}
+    }
   }
 }
