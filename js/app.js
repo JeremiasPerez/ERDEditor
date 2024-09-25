@@ -125,17 +125,20 @@ paper.on('blank:pointermove', (evt, x, y) => {
   linkEl.model.prop('target', {x:x, y:y})
   linkEl.model.attr('line/display',null)
 })
+paper.on('blank:mouseover', () => {
+  paper.hideTools()
+})
 
 const validateConnection = (source, target) => {
   let validConnections = []
   let sourceType = source.model.get('type')
   let targetType = target.model.get('type')
+  if(source.model.id == target.model.id) return null
   // valid connections: attribute - entity, attribute - relation, attribute - attribute, relation - entity
   let validCons = [
     ['erd.Entity','erd.Attribute'],['erd.Relation','erd.Attribute'],['erd.Attribute','erd.Attribute'],['erd.Relation','erd.Entity'],['erd.Entity','erd.Entity'],['erd.Entity','erd.ConnectionPoint']
   ]
   let con = validCons.find(((el) => (el[0] == sourceType && el[1] == targetType) || (el[1] == sourceType && el[0] == targetType)))
-
   // TODO: attribute can only be connected to one element
   return con
 }
@@ -227,19 +230,26 @@ const manageConnection = (target) => {
     link = new InheritanceLink({
       source: ent.model,
       target: con.model,
-      showSemicircle: true,
-      isTotal: false
+      linkType: 'connection2subclass'
     })
+    if(con.model.prop('connectionType') == 'category'){
+      console.log(con.model.prop('superclassConnections'))
+      con.model.prop('superclassConnections',con.model.prop('superclassConnections').concat([link.model]))
+    } else {
+      console.log(con.model.prop('superclassConnections'))
+      con.model.prop('subclassConnections',con.model.prop('subclassConnections').concat([link.model]))
+    }
   }
   else if(con.includes('erd.Attribute')){
     link = new AttributeLink({
       source: source.model,
       target: target.model
     })
-  } else {
+  } else { // entity to entity
     link = new InheritanceLink({
       source: source.model,
-      target: target.model
+      target: target.model,
+      linkType: 'entity2entity'
     })
   }
   link.addTo(paper.model)
@@ -253,11 +263,8 @@ paper.on('link:mouseleave', (linkView) => {
   //linkView.hideTools();
 });
 paper.on('blank:pointerup', (evt, x, y) => {
-  console.log(evt)
   if (!paper.model.get('linking')) return
-  console.log(paper.model.get('linking'))
   let el = paper.findViewsFromPoint({x: x, y: y})
-  console.log(el)
   if (el.length > 0) manageConnection(el[0])
   paper.model.set('linking',false)
   let link = document.querySelector('[model-id=connectionLink]')
@@ -300,7 +307,7 @@ document.querySelector('#paper').addEventListener('drop', (e) => {
 })
 
 const addTools = (model) => {
-  const types = ['erd.Relation','erd.Entity','erd.Attribute','erd.AttributeLink','erd.RelationshipLink','erd.InheritanceLink']
+  const types = ['erd.Relation','erd.Entity','erd.Attribute','erd.AttributeLink','erd.RelationshipLink'/*,'erd.InheritanceLink'*/]
   if(!types.includes(model.prop('type'))) return
   const elementView = model.findView(paper)
   let tools = []
@@ -326,9 +333,9 @@ const addTools = (model) => {
     case 'erd.RelationshipLink':
       tools = [new linkTools.Vertices(), new linkTools.Remove({scale: 1.5})]
       break
-    case 'erd.InheritanceLink':
+    /*case 'erd.InheritanceLink':
       tools = [new linkTools.Remove({distance: 25, scale: 1.5}), new SettingsButton({distance: -25, scale: 1.5})]
-      break
+      break*/
   }
   const toolsView = new dia.ToolsView({tools: tools})
   elementView.addTools(toolsView)

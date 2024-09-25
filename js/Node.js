@@ -297,6 +297,231 @@ export const LinkButton = elementTools.Button.extend({
     }
   }
 });
+export const DockButton = elementTools.Button.extend({
+  name: 'dock-button',
+  options: {
+    markup: [
+      {tagName: 'text',
+        selector: 'dock-emoji',
+        attributes: {
+          cursor: 'pointer',
+          textAnchor: 'middle',
+          textVerticalAnchor: 'middle',
+          fill: 'black',
+          fontSize: 12,
+          y: 5
+        },
+        textContent: '️🔗',
+      }],
+    x: '100%',
+    y: '50%',
+    scale: 1.5,
+    rotate: false,
+    action: function(evt, elementView, buttonView) {
+      dockInheritanceLink(elementView)
+    }
+  }
+});
+export const UndockButton = elementTools.Button.extend({
+  name: 'undock-button',
+  options: {
+    markup: [
+      {tagName: 'image',
+        selector: 'settings-emoji',
+        attributes: {
+          cursor: 'pointer',
+          href: 'img/undock.png',
+          width: 16,
+          height: 16,
+          x: -8,
+          y: -8
+        }
+      }],
+    x: '100%',
+    y: '50%',
+    scale: 1.5,
+    rotate: false,
+    action: function(evt, elementView, buttonView) {
+      undockInheritanceLink(elementView)
+    }
+  }
+});
+export const InvertButton = elementTools.Button.extend({
+  name: 'invert-button',
+  options: {
+    markup: [
+      {tagName: 'text',
+        selector: 'invert-emoji',
+        attributes: {
+          cursor: 'pointer',
+          textAnchor: 'middle',
+          textVerticalAnchor: 'middle',
+          fill: 'black',
+          fontSize: 12,
+          y: 5
+        },
+        textContent: '️🔃',
+      }],
+    x: '100%',
+    y: '50%',
+    scale: 1.5,
+    rotate: false,
+    action: function(evt, elementView, buttonView) {
+      invertInheritanceLink(elementView)
+    }
+  }
+});
+export const TotalInheritanceButton = elementTools.Button.extend({
+  name: 'total-inheritance-button',
+  options: {
+    markup: [
+      {
+        tagName: 'circle',
+        selector: 'outer-circle',
+        attributes: {
+          cursor: 'pointer',
+          fill: 'white',
+          stroke: 'black',
+          strokeWidth: '1',
+          r: '8',
+          cx: 0,
+          cy: 0
+        }
+      }, {
+        tagName: 'path',
+        selector: 'button-line2',
+        attributes: {
+          cursor: 'pointer',
+          fill: 'transparent',
+          strokeWidth: 2,
+          stroke: 'black',
+          d: 'M -2 -6 L -2 6'
+        }
+      },
+      {
+        tagName: 'path',
+        selector: 'button-line1',
+        attributes: {
+          cursor: 'pointer',
+          fill: 'transparent',
+          strokeWidth: 2,
+          stroke: 'black',
+          d: 'M 2 -6 L 2 6'
+        }
+      }],
+    x: '50%',
+    y: '0%',
+    scale: 1.5,
+    rotate: false,
+    action: function(evt, elementView, buttonView) {
+      convertTotalInheritanceLink(elementView)
+    }
+  }
+});
+export const PartialInheritanceButton = elementTools.Button.extend({
+  name: 'partial-inheritance-button',
+  options: {
+    markup: [
+      {
+        tagName: 'circle',
+        selector: 'outer-circle',
+        attributes: {
+          cursor: 'pointer',
+          fill: 'white',
+          stroke: 'black',
+          strokeWidth: '1',
+          r: '8',
+          cx: 0,
+          cy: 0
+        }
+      },
+      {
+        tagName: 'path',
+        selector: 'button-line1',
+        attributes: {
+          cursor: 'pointer',
+          fill: 'transparent',
+          strokeWidth: 2,
+          stroke: 'black',
+          d: 'M 0 -6 L 0 6'
+        }
+      }],
+    x: '50%',
+    y: '0%',
+    scale: 1.5,
+    rotate: false,
+    action: function(evt, elementView, buttonView) {
+      convertPartialInheritanceLink(elementView)
+    }
+  }
+});
+
+const dockInheritanceLink = (elementView) => {
+  let wasTotal = elementView.model.prop('isTotal')
+  let wasTurned = elementView.model.prop('turned')
+  let paper = elementView.paper
+  let subclass = wasTurned ? elementView.model.target() : elementView.model.source()
+  let superclass = wasTurned ? elementView.model.source() : elementView.model.target()
+
+  let subBBox = subclass.getBBox()
+  let superBBox = superclass.getBBox()
+  let connectionPoint = new ConnectionPoint({
+    isTotal: wasTotal
+  })
+  let subCX = subBBox.x + subBBox.width/2
+  let subCY = subBBox.y + subBBox.height/2
+  let superCX = superBBox.x + superBBox.width/2
+  let superCY = superBBox.y + superBBox.height/2
+  connectionPoint.position(superCX + (subCX - superCX)/2 - 15, superCY + (subCY - superCY)/2 - 15)
+  connectionPoint.addTo(paper.model)
+
+  paper.model.removeCells(elementView.model) // eliminar conexión (simple) original
+
+  let conSubclass2Point = new InheritanceLink({
+    source: subclass,
+    target: connectionPoint,
+    isTotal: false,
+    linkType: 'connection2subclass',
+    connectionType: 'specialization'
+  })
+  conSubclass2Point.addTo(paper.model)
+
+  let conPoint2Superclass = new InheritanceLink({
+    source: superclass,
+    target: connectionPoint,
+    isTotal: wasTotal,
+    linkType: 'connection2superclass',
+    connectionType: 'specialization'
+  })
+  conPoint2Superclass.addTo(paper.model)
+
+  connectionPoint.prop('superclassConnections',[conPoint2Superclass])
+  connectionPoint.prop('subclassConnections',[conSubclass2Point])
+  // show settings for the connection point
+}
+
+const undockInheritanceLink = (elementView) => {
+
+}
+
+const invertInheritanceLink = (elementView) => {
+  if(elementView.model.prop('linkType') == 'entity2entity'){
+    elementView.model.prop('turned', !elementView.model.prop('turned'))
+  } else {  // todo si está conectado a connection point,
+    let conPoint = elementView.model.getConnectionPoint()
+    conPoint.invertDirection(elementView.model)
+  }
+}
+
+const convertTotalInheritanceLink = (elementView) => {
+  let connectionPoint = elementView.model.getConnectionPoint()
+  connectionPoint.prop('isTotal',true)
+}
+
+const convertPartialInheritanceLink = (elementView) => {
+  let connectionPoint = elementView.model.getConnectionPoint()
+  connectionPoint.prop('isTotal',false)
+}
 
 // ENTITIES
 const entityMarkup = util.svg/* xml */`
@@ -873,15 +1098,10 @@ export class InheritanceLink extends dia.Link {
     return {
       ...super.defaults,
       type: 'erd.InheritanceLink',
-      linkType: 'entity2entity',
+      linkType: 'entity2entity', // possible values: entity2entity, connection2superclass, connection2subclass
       dimX: w,
       dimY: h,
-      subclass: null,
-      superclass: null,
       turned: false,
-      isTotal: false,
-      partOfGroup: false,
-      showSemicircle: true,
       attrs: {
         line: {
           connection: true,
@@ -920,11 +1140,19 @@ export class InheritanceLink extends dia.Link {
       }
     }
   }
+  getConnectionPoint(){
+    if (this.prop('linkType') == 'entity2entity') return null
+    if(this.source().prop('type') == 'erd.ConnectionPoint') return this.source()
+    else return this.target()
+  }
 }
 export class InheritanceLinkView extends dia.LinkView {
   render() {
     dia.LinkView.prototype.render.apply(this, arguments)
-    if(this.model.prop('isTotal')){
+    let linkType = this.model.prop('linkType')
+    let connectionPoint = this.model.getConnectionPoint()
+    let connectionType = connectionPoint == null ? 'specialization' : connectionPoint.prop('connectionType')
+    if(connectionPoint != null && connectionPoint.prop('isTotal') && ((linkType == 'connection2superclass' && connectionType == 'specialization') ||  (linkType == 'connection2subclass' && connectionType == 'category'))){
       this.model.attr('line/stroke','transparent')
       this.model.attr('lineDouble1/display',null)
       this.model.attr('lineDouble2/display',null)
@@ -959,7 +1187,7 @@ export class InheritanceLinkView extends dia.LinkView {
       this.model.attr('lineDouble1/display','none')
       this.model.attr('lineDouble2/display','none')
     }
-    if(this.model.prop('showSemicircle')){
+    if(linkType == 'entity2entity' || (linkType == 'connection2subclass' && connectionType == 'specialization') || (linkType == 'connection2subclass' && connectionType == 'category')){
       // todo - arreglar parche temporal para el desplazamioento
       this.model.attr('semicircle/display',null)
       let point = this.getPointAtRatio(0.5)
@@ -978,50 +1206,52 @@ export class InheritanceLinkView extends dia.LinkView {
     dia.LinkView.prototype.initialize.apply(this, arguments)
     this.listenTo(this.model, 'change', (model, options) => {
       this.render()
+      this.manageTools()
     })
     this.model.prop('source').on('change:position',() => {this.render()})
     this.model.prop('target').on('change:position',() => {this.render()})
 
     // todo add view
-  }
-  manageSemicircleClick(e) {
-    let paper = this.paper
-    if(this.model.prop('linkSubtype') == 'entity2entity'){
-      this.model.prop('turned', !this.model.prop('turned'))
-    } else {  // todo si está conectado a connection point, cambia la funcionalidad
-      let conPoint = null
-      if(this.model.source().prop('type') == 'erd.ConnectionPoint') conPoint = this.model.source()
-      else conPoint = this.model.target()
-      // borrar / crear la conexión con la superclase para conservar la dirección
-      let oldSuperConn = conPoint.prop('superclassConnection')
-      let superConnEntity = null
-      if(oldSuperConn.source().prop('type') == 'erd.Entity') superConnEntity = oldSuperConn.source()
-      else superConnEntity = oldSuperConn.target()
-      let newSuperConn = new InheritanceLink({
-        source: superConnEntity,
-        target: conPoint,
-        isTotal: false,
-        showSemicircle: true,
-        linkSubtype: 'entity2point'
-      })
-      paper.model.removeCells(oldSuperConn)
-      newSuperConn.addTo(paper.model)
 
-      // modificar la conexión sobre la que se ha hecho click (la que tenía el semicírculo) - en este caso no hace falta re-crearla porque da igual la dirección
-      this.model.prop('showSemicircle',false)
-      this.model.prop('isTotal',conPoint.prop('isTotal'))
-
-      let subclassConnections = conPoint.prop('subclassConnections')
-      let ind = subclassConnections.findIndex((c) => {c.id == this.model.id})
-      subclassConnections.splice(ind,1,newSuperConn)
-      conPoint.prop('subclassConnections',subclassConnections)
-      conPoint.prop('superclassConnection',this.model)
-    }
+    this.manageTools()
   }
-  events() {
-    return {
-      'click .semicircle': (e) => {this.manageSemicircleClick(e)}
+  manageTools() {
+    // todo gestionar tools dependiendo del tipo de link
+    this.removeTools()
+    let tools = []
+    let linkType = this.model.prop('linkType')
+    let connectionPoint = this.model.getConnectionPoint()
+    let connectionContent = connectionPoint == null ? 'specialization' : connectionPoint.prop('connectionType')
+    let isTotal = connectionPoint != null ? connectionPoint.prop('isTotal') : false
+    if(linkType == 'entity2entity'){
+      tools.push(new linkTools.Remove({distance: '25%', scale: 1.5}))
+      tools.push(new DockButton({distance: '75%', scale: 1.5}))
+      tools.push(new InvertButton({distance: '50%', scale: 1.5}))
     }
+    else if(linkType == 'connection2subclass' && connectionContent == 'specialization') {
+      tools.push(new linkTools.Remove({distance: '25%', scale: 1.5}))
+      tools.push(new UndockButton({distance: '75%', scale: 1.5}))
+      tools.push(new InvertButton({distance: '50%', scale: 1.5}))
+    }
+    else if(linkType == 'connection2superclass' && connectionContent == 'specialization' && isTotal){
+      tools.push(new PartialInheritanceButton({distance: '50%', scale: 1.5}))
+    }
+    else if(linkType == 'connection2superclass' && connectionContent == 'specialization' && !isTotal){
+      tools.push(new TotalInheritanceButton({distance: '50%', scale: 1.5}))
+    }
+    else if(linkType == 'connection2superclass' && connectionContent == 'category'){
+      tools.push(new linkTools.Remove({distance: '25%', scale: 1.5}))
+      tools.push(new InvertButton({distance: '50%', scale: 1.5}))
+    }
+    else if(linkType == 'connection2subclass' && connectionContent == 'category' && isTotal){
+      tools.push(new PartialInheritanceButton({distance: '50%', scale: 1.5}))
+    }
+    else if(linkType == 'connection2subclass' && connectionContent == 'category' && !isTotal){
+      tools.push(new TotalInheritanceButton({distance: '50%', scale: 1.5}))
+    }
+    const toolsView = new dia.ToolsView({tools: tools})
+    this.addTools(toolsView)
+    this.hideTools()
   }
 }
 
@@ -1049,8 +1279,8 @@ export class ConnectionPoint extends dia.Element {
     return {
       ...super.defaults,
       type: 'erd.ConnectionPoint',
-      connectionType: '',
-      superclassConnection: null,
+      connectionType: 'specialization',
+      superclassConnections: [],
       subclassConnections: [],
       isTotal: false,
       size: {
@@ -1079,25 +1309,96 @@ export class ConnectionPoint extends dia.Element {
       }
     }
   }
+  invertDirection (element) {
+    if(this.prop('connectionType') == 'category'){
+
+      // todo -> check
+      let subclassConnections = this.prop('subclassConnections')
+      subclassConnections.forEach((c) => {
+        c.prop('linkType', 'connection2superclass')
+      })
+      let superclassConnections = this.prop('superclassConnections')
+      superclassConnections.forEach((c) => {
+        c.prop('linkType', 'connection2subclass')
+      })
+      this.prop('subclassConnections',superclassConnections)
+      this.prop('superclassConnections',subclassConnections)
+
+    } else if(this.prop('connectionType') == 'specialization'){
+      let subclassConnections = this.prop('subclassConnections')
+      let ind = subclassConnections.findIndex((c) => {
+        return c.id = element.id
+      })
+      subclassConnections.splice(ind,1)
+
+      let superclassConnections = this.prop('superclassConnections')
+      superclassConnections.forEach((c) => {
+        c.prop('linkType', 'connection2subclass')
+      })
+      element.prop('linkType','connection2superclass')
+      this.prop('subclassConnections',subclassConnections.concat(superclassConnections))
+      this.prop('superclassConnections',[element])
+    }
+  }
+  setType (type) {
+    console.log('new type',type)
+    let oldType = this.prop('connectionType')
+    if(type == oldType) return
+
+    let subclassConnections = this.prop('subclassConnections')
+    let superclassConnections = this.prop('superclassConnections')
+    subclassConnections.forEach((c) => {
+      c.prop('linkType','connection2superclass')
+    })
+    superclassConnections.forEach((c) => {
+      c.prop('linkType','connection2subclass')
+    })
+    this.prop('subclassConnections',superclassConnections)
+    this.prop('superclassConnections',subclassConnections)
+    this.prop('connectionType',type)
+  }
 }
 export class ConnectionPointView extends dia.ElementView {
   render() {
     dia.ElementView.prototype.render.apply(this, arguments)
+    this.el.querySelector('.connectionTypeLabelInput').innerText = this.model.prop('labelText')
   }
   initialize() {
     dia.ElementView.prototype.initialize.apply(this, arguments)
     this.listenTo(this.model, 'change', (model, options) => {
       this.render()
+      let paper = this.paper
+      console.log(this.model)
+      console.log(this.model.prop('superclassConnections'))
+      this.model.prop('superclassConnections').forEach((c) => {
+        let conView = paper.findViewByModel(c)
+        conView.render()
+        conView.manageTools()
+      })
+      this.model.prop('subclassConnections').forEach((c) => {
+        let conView = paper.findViewByModel(c)
+        conView.render()
+        conView.manageTools()
+      })
     })
+    let tools = [
+      new linkTools.Remove({distance: '25%', scale: 1.5, x: '100%', y: '0%'})
+    ]
+    const toolsView = new dia.ToolsView({tools: tools})
+    this.addTools(toolsView)
+    this.hideTools()
   }
   manageInput(e) {
-    /*this.model.prop('labelText',e.currentTarget.innerText.trim())
-    if(e.currentTarget.innerText.trim() == ''){
+    let labelText = e.currentTarget.innerText.trim()
+    if(labelText != 'd' && labelText != 'o' && labelText != 'u'){
       while (e.currentTarget.firstChild) e.currentTarget.removeChild(e.currentTarget.firstChild)
-      this.model.prop('size/width',this.model.get('initialSize').width)
+      this.model.prop('labelText','')
+      this.model.setType('specialization')
     } else{
-      this.model.prop('size/width',e.currentTarget.offsetWidth)
-    }*/
+      this.model.prop('labelText',labelText)
+      if (labelText == 'u') this.model.setType('category')
+      else this.model.setType('specialization')
+    }
   }
   events () {
     return {
