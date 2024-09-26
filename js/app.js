@@ -107,10 +107,13 @@ paper.on('element:mouseleave', elementView => {
   elementView.hideTools();
 });*/
 paper.on('cell:mouseleave', elementView => {
-  elementView.hideTools();
+  //elementView.hideTools();
 });
-paper.on('cell:mouseenter', elementView => {
-  elementView.showTools();
+paper.on('cell:mouseenter', (elementView, evt) => {
+  // se busca el elemento sobre el que está el cursor ya que elementView a veces falla
+  let target = evt.target.closest('.joint-cell')
+  let view = paper.findView(target)
+  if(view != null) view.showTools()
 });
 paper.on('cell:pointermove element:pointermove link:pointermove', (cellView, evt, x, y) => {
   if (!paper.model.get('linking')) return
@@ -233,11 +236,14 @@ const manageConnection = (target) => {
       linkType: 'connection2subclass'
     })
     if(con.model.prop('connectionType') == 'category'){
-      console.log(con.model.prop('superclassConnections'))
-      con.model.prop('superclassConnections',con.model.prop('superclassConnections').concat([link.model]))
+      link.prop('linkType','connection2superclass')
+      let superConns = con.model.prop('superclassConnections')
+      superConns.push(link)
+      con.model.prop('superclassConnections',superConns)
     } else {
-      console.log(con.model.prop('superclassConnections'))
-      con.model.prop('subclassConnections',con.model.prop('subclassConnections').concat([link.model]))
+      let subConns = con.model.prop('subclassConnections')
+      subConns.push(link)
+      con.model.prop('subclassConnections',subConns)
     }
   }
   else if(con.includes('erd.Attribute')){
@@ -307,7 +313,7 @@ document.querySelector('#paper').addEventListener('drop', (e) => {
 })
 
 const addTools = (model) => {
-  const types = ['erd.Relation','erd.Entity','erd.Attribute','erd.AttributeLink','erd.RelationshipLink'/*,'erd.InheritanceLink'*/]
+  const types = ['erd.Relation','erd.Entity','erd.Attribute','erd.AttributeLink','erd.RelationshipLink','erd.ConnectionPoint']
   if(!types.includes(model.prop('type'))) return
   const elementView = model.findView(paper)
   let tools = []
@@ -333,9 +339,9 @@ const addTools = (model) => {
     case 'erd.RelationshipLink':
       tools = [new linkTools.Vertices(), new linkTools.Remove({scale: 1.5})]
       break
-    /*case 'erd.InheritanceLink':
-      tools = [new linkTools.Remove({distance: 25, scale: 1.5}), new SettingsButton({distance: -25, scale: 1.5})]
-      break*/
+    case 'erd.ConnectionPoint':
+      tools = [new elementTools.Remove({scale: 1.5, x: '100%', y: '0%'})]
+      break
   }
   const toolsView = new dia.ToolsView({tools: tools})
   elementView.addTools(toolsView)

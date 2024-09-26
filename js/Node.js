@@ -360,7 +360,7 @@ export const InvertButton = elementTools.Button.extend({
           fontSize: 12,
           y: 5
         },
-        textContent: '️🔃',
+        textContent: '️🔄',
       }],
     x: '100%',
     y: '50%',
@@ -1210,13 +1210,9 @@ export class InheritanceLinkView extends dia.LinkView {
     })
     this.model.prop('source').on('change:position',() => {this.render()})
     this.model.prop('target').on('change:position',() => {this.render()})
-
-    // todo add view
-
     this.manageTools()
   }
   manageTools() {
-    // todo gestionar tools dependiendo del tipo de link
     this.removeTools()
     let tools = []
     let linkType = this.model.prop('linkType')
@@ -1230,8 +1226,8 @@ export class InheritanceLinkView extends dia.LinkView {
     }
     else if(linkType == 'connection2subclass' && connectionContent == 'specialization') {
       tools.push(new linkTools.Remove({distance: '25%', scale: 1.5}))
-      tools.push(new UndockButton({distance: '75%', scale: 1.5}))
-      tools.push(new InvertButton({distance: '50%', scale: 1.5}))
+      //tools.push(new UndockButton({distance: '75%', scale: 1.5}))
+      tools.push(new InvertButton({distance: '75%', scale: 1.5}))
     }
     else if(linkType == 'connection2superclass' && connectionContent == 'specialization' && isTotal){
       tools.push(new PartialInheritanceButton({distance: '50%', scale: 1.5}))
@@ -1241,7 +1237,7 @@ export class InheritanceLinkView extends dia.LinkView {
     }
     else if(linkType == 'connection2superclass' && connectionContent == 'category'){
       tools.push(new linkTools.Remove({distance: '25%', scale: 1.5}))
-      tools.push(new InvertButton({distance: '50%', scale: 1.5}))
+      tools.push(new InvertButton({distance: '75%', scale: 1.5}))
     }
     else if(linkType == 'connection2subclass' && connectionContent == 'category' && isTotal){
       tools.push(new PartialInheritanceButton({distance: '50%', scale: 1.5}))
@@ -1311,29 +1307,27 @@ export class ConnectionPoint extends dia.Element {
   }
   invertDirection (element) {
     if(this.prop('connectionType') == 'category'){
-
-      // todo -> check
       let subclassConnections = this.prop('subclassConnections')
       subclassConnections.forEach((c) => {
-        c.prop('linkType', 'connection2superclass')
+        if(c!=null) c.prop('linkType', 'connection2superclass')
       })
       let superclassConnections = this.prop('superclassConnections')
-      superclassConnections.forEach((c) => {
-        c.prop('linkType', 'connection2subclass')
+      let ind = superclassConnections.findIndex((c) => {
+        if(c!=null) return c.id == element.id
       })
-      this.prop('subclassConnections',superclassConnections)
-      this.prop('superclassConnections',subclassConnections)
-
+      if(ind!=null) superclassConnections.splice(ind,1,subclassConnections[0])
+      element.prop('linkType', 'connection2subclass')
+      this.prop('superclassConnections',superclassConnections)
+      this.prop('subclassConnections',[element])
     } else if(this.prop('connectionType') == 'specialization'){
       let subclassConnections = this.prop('subclassConnections')
       let ind = subclassConnections.findIndex((c) => {
-        return c.id = element.id
+        if(c != null) return c.id == element.id
       })
       subclassConnections.splice(ind,1)
-
       let superclassConnections = this.prop('superclassConnections')
       superclassConnections.forEach((c) => {
-        c.prop('linkType', 'connection2subclass')
+        if(c!=null) c.prop('linkType', 'connection2subclass')
       })
       element.prop('linkType','connection2superclass')
       this.prop('subclassConnections',subclassConnections.concat(superclassConnections))
@@ -1341,17 +1335,17 @@ export class ConnectionPoint extends dia.Element {
     }
   }
   setType (type) {
-    console.log('new type',type)
     let oldType = this.prop('connectionType')
     if(type == oldType) return
 
     let subclassConnections = this.prop('subclassConnections')
     let superclassConnections = this.prop('superclassConnections')
+
     subclassConnections.forEach((c) => {
-      c.prop('linkType','connection2superclass')
+      if(c!=null) c.prop('linkType','connection2superclass')
     })
     superclassConnections.forEach((c) => {
-      c.prop('linkType','connection2subclass')
+      if(c!=null) c.prop('linkType','connection2subclass')
     })
     this.prop('subclassConnections',superclassConnections)
     this.prop('superclassConnections',subclassConnections)
@@ -1368,25 +1362,21 @@ export class ConnectionPointView extends dia.ElementView {
     this.listenTo(this.model, 'change', (model, options) => {
       this.render()
       let paper = this.paper
-      console.log(this.model)
-      console.log(this.model.prop('superclassConnections'))
       this.model.prop('superclassConnections').forEach((c) => {
         let conView = paper.findViewByModel(c)
-        conView.render()
-        conView.manageTools()
+        if(conView != null){
+          conView.render()
+          conView.manageTools()
+        }
       })
       this.model.prop('subclassConnections').forEach((c) => {
         let conView = paper.findViewByModel(c)
-        conView.render()
-        conView.manageTools()
+        if(conView != null){
+          conView.render()
+          conView.manageTools()
+        }
       })
     })
-    let tools = [
-      new linkTools.Remove({distance: '25%', scale: 1.5, x: '100%', y: '0%'})
-    ]
-    const toolsView = new dia.ToolsView({tools: tools})
-    this.addTools(toolsView)
-    this.hideTools()
   }
   manageInput(e) {
     let labelText = e.currentTarget.innerText.trim()
