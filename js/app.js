@@ -238,11 +238,11 @@ const manageConnection = (target) => {
     if(con.model.prop('connectionType') == 'category'){
       link.prop('linkType','connection2superclass')
       let superConns = con.model.prop('superclassConnections')
-      superConns.push(link)
+      superConns.push(link.id)
       con.model.prop('superclassConnections',superConns)
     } else {
       let subConns = con.model.prop('subclassConnections')
-      subConns.push(link)
+      subConns.push(link.id)
       con.model.prop('subclassConnections',subConns)
     }
   }
@@ -371,7 +371,10 @@ document.querySelector('#file-input').addEventListener('change',(ev) => {
     graph.fromJSON(JSON.parse(reader.result))
     let cont = document.querySelector('#paperCont')
     let cells = graph.getCells()
-    cells.forEach((c) => addTools(c))
+    cells.forEach((c) => {
+      if(c.prop('type') == 'erd.InheritanceLink') paper.findViewByModel(c).manageTools()
+      else addTools(c)
+    })
 
     // Redimensionar contenedor
     let dim = cells.reduce((m, c) => {

@@ -50,8 +50,8 @@ const addConnectionPoint = (element) => {
   })
   conPoint2Superclass.addTo(paper.model)
 
-  connectionPoint.prop('superclassConnection',conPoint2Superclass)
-  connectionPoint.prop('subclassConnections',[conSubclass2Point])
+  connectionPoint.prop('superclassConnections',[conPoint2Superclass.id])
+  connectionPoint.prop('subclassConnections',[conSubclass2Point.id])
   // show settings for the connection point
 }
 
@@ -495,8 +495,8 @@ const dockInheritanceLink = (elementView) => {
   })
   conPoint2Superclass.addTo(paper.model)
 
-  connectionPoint.prop('superclassConnections',[conPoint2Superclass])
-  connectionPoint.prop('subclassConnections',[conSubclass2Point])
+  connectionPoint.prop('superclassConnections',[conPoint2Superclass.id])
+  connectionPoint.prop('subclassConnections',[conSubclass2Point.id])
   // show settings for the connection point
 }
 
@@ -1041,7 +1041,7 @@ export class RelationshipLinkView extends dia.LinkView {
 
     this.listenTo(this.model, 'change', (model, options) => {
       let avoid = ['minCard','maxCard','role']
-      if(!avoid.includes(options.propertyPath) && !options.propertyPath.includes('labels/')) this.render()
+      if(options.propertyPath == null || (!avoid.includes(options.propertyPath) && !options.propertyPath.includes('labels/'))) this.render()
     })
   }
   manageCardInput(e) {
@@ -1140,10 +1140,21 @@ export class InheritanceLink extends dia.Link {
       }
     }
   }
+  getSource(){
+    let graph = this.graph
+    let source = graph.getCell(this.source().id)
+    return source
+  }
+  getTarget(){
+    let graph = this.graph
+    let tgt = graph.getCell(this.target().id)
+    return tgt
+  }
   getConnectionPoint(){
     if (this.prop('linkType') == 'entity2entity') return null
-    if(this.source().prop('type') == 'erd.ConnectionPoint') return this.source()
-    else return this.target()
+    //if(this.source().prop('type') == 'erd.ConnectionPoint') return this.source() // todo -> comentado para prueba
+    if(this.getSource().prop('type') == 'erd.ConnectionPoint') return this.getSource()
+    else return this.getTarget()
   }
 }
 export class InheritanceLinkView extends dia.LinkView {
@@ -1208,8 +1219,11 @@ export class InheritanceLinkView extends dia.LinkView {
       this.render()
       this.manageTools()
     })
-    this.model.prop('source').on('change:position',() => {this.render()})
-    this.model.prop('target').on('change:position',() => {this.render()})
+    // todo -> comentado para prueba
+    //this.listenTo(this.model.source(),'change:position',() => {this.render()})
+    //this.listenTo(this.model.target(),'change:position',() => {this.render()})
+    this.listenTo(this.model.getSource(),'change:position',() => {this.render()})
+    this.listenTo(this.model.getTarget(),'change:position',() => {this.render()})
     this.manageTools()
   }
   manageTools() {
@@ -1247,6 +1261,7 @@ export class InheritanceLinkView extends dia.LinkView {
     }
     const toolsView = new dia.ToolsView({tools: tools})
     this.addTools(toolsView)
+    toolsView.hide()
     this.hideTools()
   }
 }
@@ -1306,35 +1321,39 @@ export class ConnectionPoint extends dia.Element {
     }
   }
   invertDirection (element) {
+    let graph = element.graph
     if(this.prop('connectionType') == 'category'){
       let subclassConnections = this.prop('subclassConnections')
       subclassConnections.forEach((c) => {
-        if(c!=null) c.prop('linkType', 'connection2superclass')
+        let el = graph.getCell(c)
+        if(el!=null) el.prop('linkType', 'connection2superclass')
       })
       let superclassConnections = this.prop('superclassConnections')
       let ind = superclassConnections.findIndex((c) => {
-        if(c!=null) return c.id == element.id
+        return c == element.id
       })
       if(ind!=null) superclassConnections.splice(ind,1,subclassConnections[0])
       element.prop('linkType', 'connection2subclass')
       this.prop('superclassConnections',superclassConnections)
-      this.prop('subclassConnections',[element])
+      this.prop('subclassConnections',[element.id])
     } else if(this.prop('connectionType') == 'specialization'){
       let subclassConnections = this.prop('subclassConnections')
       let ind = subclassConnections.findIndex((c) => {
-        if(c != null) return c.id == element.id
+        return c == element.id
       })
       subclassConnections.splice(ind,1)
       let superclassConnections = this.prop('superclassConnections')
       superclassConnections.forEach((c) => {
-        if(c!=null) c.prop('linkType', 'connection2subclass')
+        let el = graph.getCell(c)
+        if(el!=null) el.prop('linkType', 'connection2subclass')
       })
       element.prop('linkType','connection2superclass')
       this.prop('subclassConnections',subclassConnections.concat(superclassConnections))
-      this.prop('superclassConnections',[element])
+      this.prop('superclassConnections',[element.id])
     }
   }
   setType (type) {
+    let graph = this.graph
     let oldType = this.prop('connectionType')
     if(type == oldType) return
 
@@ -1342,10 +1361,12 @@ export class ConnectionPoint extends dia.Element {
     let superclassConnections = this.prop('superclassConnections')
 
     subclassConnections.forEach((c) => {
-      if(c!=null) c.prop('linkType','connection2superclass')
+      let el = graph.getCell(c)
+      if(el!=null) el.prop('linkType','connection2superclass')
     })
     superclassConnections.forEach((c) => {
-      if(c!=null) c.prop('linkType','connection2subclass')
+      let el = graph.getCell(c)
+      if(el!=null) el.prop('linkType','connection2subclass')
     })
     this.prop('subclassConnections',superclassConnections)
     this.prop('superclassConnections',subclassConnections)
@@ -1363,14 +1384,16 @@ export class ConnectionPointView extends dia.ElementView {
       this.render()
       let paper = this.paper
       this.model.prop('superclassConnections').forEach((c) => {
-        let conView = paper.findViewByModel(c)
+        let el = paper.model.getCell(c)
+        let conView = paper.findViewByModel(el)
         if(conView != null){
           conView.render()
           conView.manageTools()
         }
       })
       this.model.prop('subclassConnections').forEach((c) => {
-        let conView = paper.findViewByModel(c)
+        let el = paper.model.getCell(c)
+        let conView = paper.findViewByModel(el)
         if(conView != null){
           conView.render()
           conView.manageTools()
