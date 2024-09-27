@@ -311,7 +311,7 @@ export const DockButton = elementTools.Button.extend({
           fontSize: 12,
           y: 5
         },
-        textContent: '️🔗',
+        textContent: '⚪'
       }],
     x: '100%',
     y: '50%',
@@ -1248,8 +1248,8 @@ export class InheritanceLinkView extends dia.LinkView {
     let isTotal = connectionPoint != null ? connectionPoint.prop('isTotal') : false
     if(linkType == 'entity2entity'){
       tools.push(new linkTools.Remove({distance: '25%', scale: 1.5}))
-      tools.push(new DockButton({distance: '75%', scale: 1.5}))
-      tools.push(new InvertButton({distance: '50%', scale: 1.5}))
+      tools.push(new DockButton({distance: '50%', scale: 1.5}))
+      tools.push(new InvertButton({distance: '75%', scale: 1.5}))
     }
     else if(linkType == 'connection2subclass' && connectionContent == 'specialization') {
       tools.push(new linkTools.Remove({distance: '25%', scale: 1.5}))
