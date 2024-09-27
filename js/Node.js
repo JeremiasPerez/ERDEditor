@@ -1167,30 +1167,43 @@ export class InheritanceLinkView extends dia.LinkView {
       this.model.attr('line/stroke','transparent')
       this.model.attr('lineDouble1/display',null)
       this.model.attr('lineDouble2/display',null)
-      let sep = 4
-      // todo -> mejorar el cálculo teniendo en cuenta el ángulo
-      // todo -> mejorar la intersección teniendo en cuenta la forma
-      let offset = -2
-      if(this.sourcePoint.x <= this.targetPoint.x) offset = 2
-      let x1 = this.sourceBBox.x+this.sourceBBox.width/2 + offset
-      let y1 = this.sourceBBox.y+this.sourceBBox.height/2
-      let x2 = this.targetBBox.x+this.targetBBox.width/2 + offset
-      let y2 = this.targetBBox.y+this.targetBBox.height/2
-      let l = new g.Line(new g.Point(x1, y1), new g.Point(x2, y2));
-      let srcRect = new g.Rect(this.sourceBBox.x,this.sourceBBox.y,this.sourceBBox.width,this.sourceBBox.height)
-      let tgtRect = new g.Rect(this.targetBBox.x,this.targetBBox.y,this.targetBBox.width,this.targetBBox.height)
+      let sep = 2
+      let offset = 1
+      let lx1 = this.sourceBBox.x+this.sourceBBox.width/2
+      let ly1 = this.sourceBBox.y+this.sourceBBox.height/2
+      let lx2 = this.targetBBox.x+this.targetBBox.width/2
+      let ly2 = this.targetBBox.y+this.targetBBox.height/2
+
+      let a = Math.atan((ly2-ly1)/(lx2 - lx1))
+      let alpha = (Math.PI/2)-a
+      let xa1 = lx1 + sep * Math.cos(alpha)
+      let ya1 = ly1 - sep * Math.sin(alpha)
+      let xa2 = lx2 + sep * Math.cos(alpha)
+      let ya2 = ly2 - sep * Math.sin(alpha)
+
+      let srcRect = null
+      if (this.model.source().prop('type') == 'erd.Entity') srcRect = new g.Rect(this.sourceBBox.x,this.sourceBBox.y,this.sourceBBox.width,this.sourceBBox.height)
+      else srcRect = new g.Ellipse(new g.Point(this.sourceBBox.x+this.sourceBBox.width/2,this.sourceBBox.y+this.sourceBBox.height/2),this.sourceBBox.width/2,this.sourceBBox.width/2)
+
+      let tgtRect = null
+      if (this.model.target().prop('type') == 'erd.Entity') tgtRect = new g.Rect(this.targetBBox.x,this.targetBBox.y,this.targetBBox.width,this.targetBBox.height)
+      else tgtRect = new g.Ellipse(new g.Point(this.targetBBox.x+this.targetBBox.width/2,this.targetBBox.y+this.targetBBox.height/2),this.targetBBox.width/2,this.targetBBox.width/2)
+
+      let l = new g.Line(new g.Point(xa1, ya1), new g.Point(xa2, ya2));
       let srcIntersections1 = srcRect.intersectionWithLine(l)
       let srcIntersections2 = tgtRect.intersectionWithLine(l)
-      let a = Math.atan((y2-y1)/(x2 - x1))
-      let alpha = (Math.PI/2)-a
-      let xb1 = x1 + sep * Math.cos(alpha)
-      let yb1 = y1 - sep * Math.sin(alpha)
-      let xb2 = x2 + sep * Math.cos(alpha)
-      let yb2 = y2 - sep * Math.sin(alpha)
+
+      this.model.attr('lineDouble1/d',`M ${srcIntersections1[0].x},${srcIntersections1[0].y} L ${srcIntersections2[0].x},${srcIntersections2[0].y}`)
+
+      let xb1 = lx1 - sep * Math.cos(alpha)
+      let yb1 = ly1 + sep * Math.sin(alpha)
+      let xb2 = lx2 - sep * Math.cos(alpha)
+      let yb2 = ly2 + sep * Math.sin(alpha)
+
       let l2 = new g.Line(new g.Point(xb1, yb1), new g.Point(xb2, yb2));
       let tgtIntersections1 = srcRect.intersectionWithLine(l2)
       let tgtIntersections2 = tgtRect.intersectionWithLine(l2)
-      this.model.attr('lineDouble1/d',`M ${srcIntersections1[0].x},${srcIntersections1[0].y} L ${srcIntersections2[0].x},${srcIntersections2[0].y}`)
+
       this.model.attr('lineDouble2/d',`M ${tgtIntersections1[0].x},${tgtIntersections1[0].y} L ${tgtIntersections2[0].x},${tgtIntersections2[0].y}`)
     }
     else {
