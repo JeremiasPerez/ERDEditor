@@ -1182,11 +1182,11 @@ export class InheritanceLinkView extends dia.LinkView {
       let ya2 = ly2 - sep * Math.sin(alpha)
 
       let srcRect = null
-      if (this.model.source().prop('type') == 'erd.Entity') srcRect = new g.Rect(this.sourceBBox.x,this.sourceBBox.y,this.sourceBBox.width,this.sourceBBox.height)
+      if (this.model.getSource() == null || this.model.getSource().prop('type') == 'erd.Entity') srcRect = new g.Rect(this.sourceBBox.x,this.sourceBBox.y,this.sourceBBox.width,this.sourceBBox.height)
       else srcRect = new g.Ellipse(new g.Point(this.sourceBBox.x+this.sourceBBox.width/2,this.sourceBBox.y+this.sourceBBox.height/2),this.sourceBBox.width/2,this.sourceBBox.width/2)
 
       let tgtRect = null
-      if (this.model.target().prop('type') == 'erd.Entity') tgtRect = new g.Rect(this.targetBBox.x,this.targetBBox.y,this.targetBBox.width,this.targetBBox.height)
+      if (this.model.getTarget() == null || this.model.getTarget().prop('type') == 'erd.Entity') tgtRect = new g.Rect(this.targetBBox.x,this.targetBBox.y,this.targetBBox.width,this.targetBBox.height)
       else tgtRect = new g.Ellipse(new g.Point(this.targetBBox.x+this.targetBBox.width/2,this.targetBBox.y+this.targetBBox.height/2),this.targetBBox.width/2,this.targetBBox.width/2)
 
       let l = new g.Line(new g.Point(xa1, ya1), new g.Point(xa2, ya2));
