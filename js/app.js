@@ -394,7 +394,7 @@ let preImageExport = () => {
   let cells = graph.getCells()
   cells.forEach((c) => {
     c.findView(paper).hideTools()
-    let elementsWithName = ['erd.Entity','erd.Attribute','erd.Relation']
+    let elementsWithName = ['erd.Entity',/*'erd.Attribute',*/'erd.Relation']
     if (!elementsWithName.includes(c.prop('type'))) return
     c.attr('elementName/display','none')
     c.attr('elementText/display',null)
@@ -404,7 +404,7 @@ let preImageExport = () => {
 let postImageExport = () => {
   let cells = graph.getCells()
   cells.forEach((c) => {
-    let elementsWithName = ['erd.Entity','erd.Attribute','erd.Relation']
+    let elementsWithName = ['erd.Entity',/*'erd.Attribute',*/'erd.Relation']
     if (!elementsWithName.includes(c.prop('type'))) return
     c.attr('elementName/display',null)
     c.attr('elementText/display','none')

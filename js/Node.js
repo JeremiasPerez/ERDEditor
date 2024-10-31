@@ -750,10 +750,12 @@ export class AttributeView extends dia.ElementView {
     } else if(this.model.prop('isPartialKey')) { // is partial key
       this.el.querySelector('.elementNameInput').style.textDecorationLine = 'underline'
       this.el.querySelector('.elementNameInput').style.textDecorationStyle = 'dotted'
+      this.el.querySelector('.elementNameInput').style.textUnderlineOffset = '2px'
       this.model.attr('elementText/textDecoration','underline dotted')
     } else { // not key
       this.el.querySelector('.elementNameInput').style.textDecorationLine = null
       this.el.querySelector('.elementNameInput').style.textDecorationStyle = null
+      this.el.querySelector('.elementNameInput').style.textUnderlineOffset = null
       this.model.attr('elementText/textDecoration',null)
     }
     return this
