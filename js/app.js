@@ -5,6 +5,7 @@ const shapes = joint.shapes
 const util = joint.util
 const elementTools = joint.elementTools
 const linkTools = joint.linkTools
+import { setupEditorActions } from './editorActions.js';
 
 
 import {
@@ -351,6 +352,8 @@ graph.on('add', (model, collection, options) => {
   addTools(model)
 })
 
+setupEditorActions(graph, paper, addTools, initAuxConnection)
+
 // BOTONES
 document.querySelector('#download').addEventListener('click',(e) => {
   let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(graph.toJSON()))
@@ -391,6 +394,7 @@ document.querySelector('#file-input').addEventListener('change',(ev) => {
   reader.readAsText(ev.currentTarget.files[0]);
 })
 let preImageExport = () => {
+  document.querySelector('#paper').classList.add('exporting')
   let cells = graph.getCells()
   cells.forEach((c) => {
     c.findView(paper).hideTools()
@@ -402,6 +406,7 @@ let preImageExport = () => {
   })
 }
 let postImageExport = () => {
+  document.querySelector('#paper').classList.remove('exporting')
   let cells = graph.getCells()
   cells.forEach((c) => {
     let elementsWithName = ['erd.Entity',/*'erd.Attribute',*/'erd.Relation']

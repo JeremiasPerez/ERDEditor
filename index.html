@@ -26,6 +26,10 @@
 <body>
   <div id="toolbar">
     <div id="toolbarContent">
+      <div id="toolbarHistory">
+        <button type="button" class="toolbarElement editorAction" id="undo" title="Deshacer (Ctrl+Z)" disabled aria-label="Deshacer">↶</button>
+        <button type="button" class="toolbarElement editorAction" id="redo" title="Rehacer (Ctrl+Y)" disabled aria-label="Rehacer">↷</button>
+      </div>
       <div id="toolbarElements">
         <div class="toolbarElement diagramElement" data-type="entity" id="entityElement" draggable="true">
           <svg cursor="pointer" width="54px" height="34px" viewBox="0 0 54 34">
@@ -44,21 +48,27 @@
         </div>
       </div>
       <div id="toolbarActions">
-        <div class="toolbarElement" id="download">
-          <img src="img/download.png" height="34" title="descargar como JSON"/>
-        </div>
-        <div class="toolbarElement" id="import">
-          <img src="img/import.png" height="34" title="importar fichero JSON"/>
-          <input type='file' id='file-input' accept=".json"/>
-        </div>
-        <div class="toolbarElement" id="imageExport">
-          <img src="img/image.png" height="34"/>
-        </div>
+        <button type="button" class="toolbarElement editorAction" id="download" title="Descargar como JSON" aria-label="Descargar como JSON">
+          <img src="img/download.png" height="34" alt=""/>
+        </button>
+        <button type="button" class="toolbarElement editorAction" id="import" title="Importar fichero JSON" aria-label="Importar fichero JSON">
+          <img src="img/import.png" height="34" alt=""/>
+        </button>
+        <input type='file' id='file-input' accept=".json"/>
+        <button type="button" class="toolbarElement editorAction" id="imageExport" title="Generar imagen" aria-label="Generar imagen">
+          <img src="img/image.png" height="34" alt=""/>
+        </button>
       </div>
     </div>
   </div>
   <div id="paperCont">
     <div id="paper"></div>
+    <button type="button" id="deleteSelection" hidden title="Eliminar todos los elementos seleccionados" aria-label="Eliminar todos los elementos seleccionados">
+      <svg width="24" height="24" viewBox="-8 -8 16 16" aria-hidden="true">
+        <circle r="7" fill="#FF1D00"/>
+        <path d="M -3 -3 3 3 M -3 3 3 -3" fill="none" stroke="#FFFFFF" stroke-width="2"/>
+      </svg>
+    </button>
   </div>
   <svg id="svg-copy-cont" />
   <div id="img-container"></div>
