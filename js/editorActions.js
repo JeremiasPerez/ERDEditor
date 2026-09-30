@@ -23,7 +23,7 @@ export function setupEditorActions(graph, paper, addTools, initAuxConnection) {
   };
   const positionDeleteButton = () => {
     const cells = [...selected].map(id => graph.getCell(id)).filter(Boolean);
-    deleteButton.hidden = !cells.length || !!marquee;
+    deleteButton.hidden = cells.length < 2 || !!marquee;
     if (deleteButton.hidden) return;
     const boxes = cells.map(cell => cell.getBBox());
     const corner = paper.localToClientPoint({
@@ -40,7 +40,7 @@ export function setupEditorActions(graph, paper, addTools, initAuxConnection) {
   const editable = target => target.closest('input, textarea, select, [contenteditable="true"]');
   const paintSelection = () => {
     graph.getElements().forEach(cell => {
-      cell.findView(paper)?.el.classList.toggle('editor-selected', selected.has(cell.id));
+      cell.findView(paper)?.el.classList.toggle('editor-selected', selected.size > 1 && selected.has(cell.id));
     });
     positionDeleteButton();
   };
@@ -120,7 +120,7 @@ export function setupEditorActions(graph, paper, addTools, initAuxConnection) {
   paper.on('scale translate resize', positionDeleteButton);
   graph.on('remove', cell => {
     selected.delete(cell.id);
-    positionDeleteButton();
+    paintSelection();
   });
   graph.on('reset', () => {
     stopMarquee();
