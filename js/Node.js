@@ -793,6 +793,8 @@ const relationMarkup = util.svg/* xml */`
       </div>
     </foreignObject>
         <text @selector="elementText" class="elementNameText"/>`
+const relationMinWidth = 80
+
 export class Relation extends dia.Element {
   preinitialize() {
     this.markup = relationMarkup;
@@ -809,14 +811,14 @@ export class Relation extends dia.Element {
       ...super.defaults,
       type: 'erd.Relation',
       size: {
-        width: 150,
+        width: relationMinWidth,
         height: 50
       },
       isIdentifier: false,
       showRoles: false,
       labelText: '',
       initialSize: {
-        width: 150,
+        width: relationMinWidth,
         height: 50,
       },
       attrs: {
@@ -881,8 +883,9 @@ export class RelationView extends dia.ElementView {
     const input = this.el.querySelector('.elementNameInput')
     input.style.whiteSpace = 'pre'
     input.style.flexShrink = '0'
-    const text = this.model.prop('labelText') || ''
-    let width = this.model.get('initialSize').width
+    // Give the empty label enough room for its placeholder; typed text keeps the compact minimum.
+    const text = this.model.prop('labelText') || input.dataset.placeholder || ''
+    let width = relationMinWidth
     if (text) {
       const style = getComputedStyle(input)
       const context = document.createElement('canvas').getContext('2d')
