@@ -837,7 +837,8 @@ export class Relation extends dia.Element {
           fill: 'white',
           stroke: 'black',
           strokeWidth: '2',
-          points: '12,calc(h/2) calc(w/2),calc(h-5) calc(w - 12),calc(h/2) calc(w/2),5',
+          // Scale both axes equally about the centre to keep every side parallel.
+          points: 'calc(w/10),calc(h/2) calc(w/2),calc(0.9*h) calc(0.9*w),calc(h/2) calc(w/2),calc(h/10)',
           display: 'none'
         },
         elementName: {
@@ -873,7 +874,28 @@ export class RelationView extends dia.ElementView {
     // identifier relationship
     if(this.model.prop('isIdentifier')) this.model.attr('innerRelationBody/display',null)
     else this.model.attr('innerRelationBody/display', 'none')
+    this.fitLabel()
     return this
+  }
+  fitLabel() {
+    const input = this.el.querySelector('.elementNameInput')
+    input.style.whiteSpace = 'pre'
+    input.style.flexShrink = '0'
+    const text = this.model.prop('labelText') || ''
+    let width = this.model.get('initialSize').width
+    if (text) {
+      const style = getComputedStyle(input)
+      const context = document.createElement('canvas').getContext('2d')
+      context.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`
+      const metrics = context.measureText(text.toUpperCase())
+      const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent
+      // At the label's top/bottom the diamond is narrower than at its centre.
+      // Reserve 4px vertically and 8px horizontally, including the inner border.
+      const scale = this.model.prop('isIdentifier') ? 0.8 : 1
+      const available = Math.max(0.1, scale - (textHeight + 8) / this.model.size().height)
+      width = Math.max(width, Math.ceil((metrics.width + 16) / available))
+    }
+    this.model.prop('size/width', width)
   }
   initialize() {
     dia.ElementView.prototype.initialize.apply(this, arguments)
@@ -886,10 +908,8 @@ export class RelationView extends dia.ElementView {
     this.model.prop('labelText',e.currentTarget.innerText.trim())
     if(e.currentTarget.innerText.trim() == ''){
       while (e.currentTarget.firstChild) e.currentTarget.removeChild(e.currentTarget.firstChild)
-      this.model.prop('size/width',this.model.get('initialSize').width)
-    } else{
-      this.model.prop('size/width',e.currentTarget.offsetWidth)
     }
+    this.fitLabel()
   }
   events() {
     return {
